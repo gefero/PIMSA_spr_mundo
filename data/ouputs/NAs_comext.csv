@@ -1,0 +1,75 @@
+iso3c,country,income_group,cluster_pimsa,peq_estado
+CHI,Channel Islands,High income,C1. Cap. avanzado,No peq. estado
+GUM,Guam,High income,C1. Cap. avanzado,No peq. estado
+NCL,New Caledonia,High income,C1. Cap. avanzado,No peq. estado
+PRI,Puerto Rico,High income,C1. Cap. avanzado,No peq. estado
+PYF,French Polynesia,High income,C1. Cap. avanzado,No peq. estado
+VIR,Virgin Islands (U.S.),High income,C1. Cap. avanzado,No peq. estado
+VEN,"Venezuela, RB",99_Sin_datos,C2. Cap. extensión reciente c/desarrollo profundidad,No peq. estado
+LSO,Lesotho,Lower middle income,C2. Cap. extensión reciente c/desarrollo profundidad,No peq. estado
+PSE,West Bank and Gaza,Lower middle income,C2. Cap. extensión reciente c/desarrollo profundidad,No peq. estado
+CUB,Cuba,Upper middle income,C2. Cap. extensión reciente c/desarrollo profundidad,No peq. estado
+DOM,Dominican Republic,Upper middle income,C2. Cap. extensión reciente c/desarrollo profundidad,No peq. estado
+GUY,Guyana,Upper middle income,C2. Cap. extensión reciente c/desarrollo profundidad,No peq. estado
+IRQ,Iraq,Upper middle income,C2. Cap. extensión reciente c/desarrollo profundidad,No peq. estado
+LBY,Libya,Upper middle income,C2. Cap. extensión reciente c/desarrollo profundidad,No peq. estado
+SRB,Serbia,Upper middle income,C2. Cap. extensión reciente c/desarrollo profundidad,No peq. estado
+VCT,St. Vincent and the Grenadines,Upper middle income,C2. Cap. extensión reciente c/desarrollo profundidad,No peq. estado
+DJI,Djibouti,Lower middle income,C3. Cap. extensión c/peso campo,No peq. estado
+HTI,Haiti,Lower middle income,C3. Cap. extensión c/peso campo,No peq. estado
+STP,Sao Tome and Principe,Lower middle income,C3. Cap. extensión c/peso campo,No peq. estado
+WSM,Samoa,Lower middle income,C3. Cap. extensión c/peso campo,No peq. estado
+GAB,Gabon,Upper middle income,C3. Cap. extensión c/peso campo,No peq. estado
+TKM,Turkmenistan,Upper middle income,C3. Cap. extensión c/peso campo,No peq. estado
+AFG,Afghanistan,Low income,C4. Cap. escasa extensión c/peso campo,No peq. estado
+BFA,Burkina Faso,Low income,C4. Cap. escasa extensión c/peso campo,No peq. estado
+LBR,Liberia,Low income,C4. Cap. escasa extensión c/peso campo,No peq. estado
+PRK,"Korea, Dem. People's Rep.",Low income,C4. Cap. escasa extensión c/peso campo,No peq. estado
+SDN,Sudan,Low income,C4. Cap. escasa extensión c/peso campo,No peq. estado
+TGO,Togo,Low income,C4. Cap. escasa extensión c/peso campo,No peq. estado
+BEN,Benin,Lower middle income,C4. Cap. escasa extensión c/peso campo,No peq. estado
+BTN,Bhutan,Lower middle income,C4. Cap. escasa extensión c/peso campo,No peq. estado
+COM,Comoros,Lower middle income,C4. Cap. escasa extensión c/peso campo,No peq. estado
+MRT,Mauritania,Lower middle income,C4. Cap. escasa extensión c/peso campo,No peq. estado
+SLB,Solomon Islands,Lower middle income,C4. Cap. escasa extensión c/peso campo,No peq. estado
+TLS,Timor-Leste,Lower middle income,C4. Cap. escasa extensión c/peso campo,No peq. estado
+VUT,Vanuatu,Lower middle income,C4. Cap. escasa extensión c/peso campo,No peq. estado
+GNQ,Equatorial Guinea,Upper middle income,C4. Cap. escasa extensión c/peso campo,No peq. estado
+COD,"Congo, Dem. Rep.",Low income,C5. Pequeña propiedad en el campo,No peq. estado
+ERI,Eritrea,Low income,C5. Pequeña propiedad en el campo,No peq. estado
+GIN,Guinea,Low income,C5. Pequeña propiedad en el campo,No peq. estado
+GNB,Guinea-Bissau,Low income,C5. Pequeña propiedad en el campo,No peq. estado
+MLI,Mali,Low income,C5. Pequeña propiedad en el campo,No peq. estado
+SLE,Sierra Leone,Low income,C5. Pequeña propiedad en el campo,No peq. estado
+SOM,Somalia,Low income,C5. Pequeña propiedad en el campo,No peq. estado
+SSD,South Sudan,Low income,C5. Pequeña propiedad en el campo,No peq. estado
+TCD,Chad,Low income,C5. Pequeña propiedad en el campo,No peq. estado
+ABW,Aruba,High income,NA,Peq. estado
+AND,Andorra,High income,NA,Peq. estado
+ATG,Antigua and Barbuda,High income,NA,Peq. estado
+CUW,Curacao,High income,NA,Peq. estado
+CYM,Cayman Islands,High income,NA,Peq. estado
+FRO,Faroe Islands,High income,NA,Peq. estado
+GIB,Gibraltar,High income,NA,Peq. estado
+GRL,Greenland,High income,NA,Peq. estado
+IMN,Isle of Man,High income,NA,Peq. estado
+KNA,St. Kitts and Nevis,High income,NA,Peq. estado
+LIE,Liechtenstein,High income,NA,Peq. estado
+MAF,St. Martin (French part),High income,NA,Peq. estado
+MCO,Monaco,High income,NA,Peq. estado
+MNP,Northern Mariana Islands,High income,NA,Peq. estado
+NRU,Nauru,High income,NA,Peq. estado
+SMR,San Marino,High income,NA,Peq. estado
+SXM,Sint Maarten (Dutch part),High income,NA,Peq. estado
+SYC,Seychelles,High income,NA,Peq. estado
+TCA,Turks and Caicos Islands,High income,NA,Peq. estado
+VGB,British Virgin Islands,High income,NA,Peq. estado
+FSM,"Micronesia, Fed. Sts.",Lower middle income,NA,Peq. estado
+KIR,Kiribati,Lower middle income,NA,Peq. estado
+PLW,Palau,Upper middle income,NA,No peq. estado
+TUV,Tuvalu,Upper middle income,NA,No peq. estado
+ASM,American Samoa,Upper middle income,NA,Peq. estado
+DMA,Dominica,Upper middle income,NA,Peq. estado
+GRD,Grenada,Upper middle income,NA,Peq. estado
+MHL,Marshall Islands,Upper middle income,NA,Peq. estado
+XKX,Kosovo,Upper middle income,NA,Peq. estado

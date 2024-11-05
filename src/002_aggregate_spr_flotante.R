@@ -1,0 +1,100 @@
+library(Rilostat)
+library(tidyverse)
+library(googlesheets4)
+library(wbstats)
+library(gt)
+
+## Uso la librería wbstats para descargar los datos
+desoc <- wb_data(c("SL.UEM.TOTL.ZS","SL.TLF.TOTL.IN"),
+                 start_date=1991,
+                 end_date=2019)
+
+desoc <- desoc %>%
+        filter(!is.na(SL.UEM.TOTL.ZS)) %>%
+        #select(-c(unit:last_updated)) %>%
+        rename(p_desoc = SL.UEM.TOTL.ZS,
+               pea = SL.TLF.TOTL.IN) %>%
+        mutate(abs_desoc = p_desoc*pea/100)
+
+country_classif <- read_csv('./data/ouputs/country_classification.csv') 
+
+desoc <- desoc %>%
+        left_join(country_classif %>% select(-country), by="iso3c") %>%
+        select(iso3c:country, region:excl_tamaño, everything())
+
+## CALCULAR PUNTO INTERMEDIO LA CANTIDAD TOTAL DE DESOC PARA 2010 y 2019
+##
+
+desoc_agg <- desoc %>%
+        arrange(iso3c, date) %>%
+        group_by(iso3c, country, region, income_group, cluster_pimsa,
+                 peq_estado, excl_tamaño) %>%
+        summarise(mean_value = weighted.mean(p_desoc,pea),
+                  pea = mean(pea),
+                  max_value = max(p_desoc),
+                  min_value = min(p_desoc),
+                  max_value_year = date[which.max(p_desoc)],
+                  min_value_year = date[which.min(p_desoc)],
+                  serie = list(p_desoc)) %>%
+        ungroup()
+
+desoc %>%
+#        mutate(abs_desoc = p_desoc*pea) %>%
+        arrange(iso3c, date) %>%
+        group_by(cluster_pimsa, date) %>%
+        summarise(mean_w = weighted.mean(p_desoc, pea),
+                  mean_sw = mean(p_desoc)) %>%
+        #filter(income_group != "99_Sin_datos") %>%
+        pivot_longer(
+                cols = c(mean_w, mean_sw),
+                names_to = "indicador") %>%
+        ungroup() %>%
+        ggplot() + 
+                geom_line(aes(x=date, y=value, color=cluster_pimsa)) +
+                facet_wrap(~indicador)
+
+desoc_agg %>%
+        select(-serie) %>%
+        write_csv('./data/proc/tablas_finales/spr_flotante_desoc.csv')
+
+desoc_agg %>%
+        select(-serie) %>%
+        haven::write_sav('./data/proc/tablas_finales/spr_flotante_desoc.sav')
+
+desoc_agg %>%
+        select(-serie) %>%
+        openxlsx::write.xlsx('./data/proc/tablas_finales/spr_flotante_desoc.xlsx')
+
+########
+
+desoc_agg %>%
+        gt() %>% 
+        cols_label(
+                iso3c = "Country code",
+                mean_value = 'Tasa desoc. (media)',
+                max_value = 'Tasa desoc. (valor max)',
+                min_value = 'Tasa desoc. (valor min)',
+                max_value_year = 'Tasa desoc. (año con valor max)',
+                min_value_year = 'Tasa desoc. (año con valor min)'
+        ) %>%
+        fmt_percent(columns = mean_value:min_value) %>%
+        gtExtras::gt_plt_sparkline(column = serie,
+                                   fig_dim = c(20, 40)
+        )
+
+
+plot <- desoc %>%
+        ggplot() +
+        geom_line(aes(x=date, y=p_desoc, color=income_group, group=country)) +
+        theme_minimal() +
+        facet_wrap(~cluster_pimsa)
+
+plotly::ggplotly(plot)
+
+
+## Hacer tasa desoc (ponderada y simple) por región, cluster y grupo de ingresos
+## % de desocupados (distribución mundial) por región, cluster y grupo de ingresos
+#https://docs.google.com/document/d/1rnUBeGKQgC4VGMxAqBbovCrYaEopJDXkg3NvSR2s_fQ/edit?tab=t.0
+ 
+
+#https://rfortherestofus.com/2024/02/sparklines-gt
