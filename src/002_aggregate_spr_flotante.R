@@ -18,9 +18,10 @@ desoc <- desoc %>%
 
 country_classif <- read_csv('./data/ouputs/country_classification.csv') 
 
+
 desoc <- desoc %>%
         left_join(country_classif %>% select(-country), by="iso3c") %>%
-        select(iso3c:country, region:excl_tamaño, everything())
+        select(iso3c:country, region:ocde, everything())
 
 ## CALCULAR PUNTO INTERMEDIO LA CANTIDAD TOTAL DE DESOC PARA 2010 y 2019
 ##
@@ -55,15 +56,15 @@ desoc %>%
 
 desoc_agg %>%
         select(-serie) %>%
-        write_csv('./data/proc/tablas_finales/spr_flotante_desoc.csv')
+        write_csv('./data/tablas_finales/spr_flotante_desoc.csv')
 
 desoc_agg %>%
         select(-serie) %>%
-        haven::write_sav('./data/proc/tablas_finales/spr_flotante_desoc.sav')
+        haven::write_sav('./data/tablas_finales/spr_flotante_desoc.sav')
 
 desoc_agg %>%
         select(-serie) %>%
-        openxlsx::write.xlsx('./data/proc/tablas_finales/spr_flotante_desoc.xlsx')
+        openxlsx::write.xlsx('./data/tablas_finales/spr_flotante_desoc.xlsx')
 
 ########
 
@@ -85,7 +86,7 @@ desoc_agg %>%
 
 plot <- desoc %>%
         ggplot() +
-        geom_line(aes(x=date, y=p_desoc, color=income_group, group=country)) +
+        geom_line(aes(x=date, y=p_desoc, color=income_group_2, group=country)) +
         theme_minimal() +
         facet_wrap(~cluster_pimsa)
 
@@ -96,5 +97,58 @@ plotly::ggplotly(plot)
 ## % de desocupados (distribución mundial) por región, cluster y grupo de ingresos
 #https://docs.google.com/document/d/1rnUBeGKQgC4VGMxAqBbovCrYaEopJDXkg3NvSR2s_fQ/edit?tab=t.0
  
+
+desoc %>%
+        group_by(region) %>%
+        summarise(`Tasa de desoc. (pond. PEA)` = weighted.mean(p_desoc, pea),
+                  `Tasa de desoc.` = mean(p_desoc))
+
+desoc %>%
+        group_by(income_group_2) %>%
+        summarise(`Tasa de desoc. (pond. PEA)` = weighted.mean(p_desoc, pea),
+                  `Tasa de desoc.` = mean(p_desoc)
+        )
+
+desoc %>%
+        group_by(cluster_pimsa) %>%
+        summarise(`Tasa de desoc. (pond. PEA)` = weighted.mean(p_desoc, pea),
+                  `Tasa de desoc.` = mean(p_desoc)
+        )
+
+desoc %>%
+        filter(date %in% c(2010, 2019)) %>%
+        group_by(date, region) %>%
+        summarise(n_desoc = sum(abs_desoc)) %>%
+        mutate(p_desoc = n_desoc / sum(n_desoc)) %>%
+        ungroup() %>%
+        pivot_longer(cols = c(n_desoc, p_desoc)) %>%
+        pivot_wider(names_from = c(date, name),
+                    values_from=value) %>%
+        select(contains("n"), contains("p"))
+        
+
+desoc %>%
+        filter(date %in% c(2010, 2019)) %>%
+        group_by(date, income_group_2) %>%
+        summarise(n_desoc = sum(abs_desoc)) %>%
+        mutate(p_desoc = n_desoc / sum(n_desoc)) %>%
+        ungroup() %>%
+        pivot_longer(cols = c(n_desoc, p_desoc)) %>%
+        pivot_wider(names_from = c(date, name),
+                    values_from=value) %>%
+        select(contains("n"), contains("p"))
+ 
+
+desoc %>%
+        filter(date %in% c(2010, 2019)) %>%
+        group_by(date, cluster_pimsa) %>%
+        summarise(n_desoc = sum(abs_desoc)) %>%
+        mutate(p_desoc = n_desoc / sum(n_desoc)) %>%
+        ungroup() %>%
+        pivot_longer(cols = c(n_desoc, p_desoc)) %>%
+        pivot_wider(names_from = c(date, name),
+                    values_from=value) %>%
+        select(cluster_pimsa, contains("n"), contains("p"))
+
 
 #https://rfortherestofus.com/2024/02/sparklines-gt
