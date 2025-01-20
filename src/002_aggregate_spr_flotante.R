@@ -101,19 +101,23 @@ plotly::ggplotly(plot)
 desoc %>%
         group_by(region) %>%
         summarise(`Tasa de desoc. (pond. PEA)` = weighted.mean(p_desoc, pea),
-                  `Tasa de desoc.` = mean(p_desoc))
+                  `Tasa de desoc.` = mean(p_desoc)) %>%
+        writexl::write_xlsx('./data/tabs/sprflotante_tasa_desoc_region.xlsx')
 
 desoc %>%
         group_by(income_group_2) %>%
         summarise(`Tasa de desoc. (pond. PEA)` = weighted.mean(p_desoc, pea),
-                  `Tasa de desoc.` = mean(p_desoc)
-        )
+                  `Tasa de desoc.` = mean(p_desoc)) %>%
+        writexl::write_xlsx('./data/tabs/sprflotante_tasa_desoc_income.xlsx')
+
 
 desoc %>%
         group_by(cluster_pimsa) %>%
         summarise(`Tasa de desoc. (pond. PEA)` = weighted.mean(p_desoc, pea),
                   `Tasa de desoc.` = mean(p_desoc)
-        )
+        ) %>%
+        writexl::write_xlsx('./data/tabs/sprflotante_tasa_desoc_clstpimsa.xlsx')
+
 
 desoc %>%
         filter(date %in% c(2010, 2019)) %>%
@@ -124,7 +128,9 @@ desoc %>%
         pivot_longer(cols = c(n_desoc, p_desoc)) %>%
         pivot_wider(names_from = c(date, name),
                     values_from=value) %>%
-        select(contains("n"), contains("p"))
+        select(contains("n"), contains("p")) %>%
+        writexl::write_xlsx('./data/tabs/sprflotante_20102019_desoc_region.xlsx')
+
         
 
 desoc %>%
@@ -136,10 +142,10 @@ desoc %>%
         pivot_longer(cols = c(n_desoc, p_desoc)) %>%
         pivot_wider(names_from = c(date, name),
                     values_from=value) %>%
-        select(contains("n"), contains("p"))
- 
+        select(contains("n"), contains("p")) %>%
+        writexl::write_xlsx('./data/tabs/sprflotante_20102019_desoc_income.xlsx')
 
-desoc %>%
+ desoc %>%
         filter(date %in% c(2010, 2019)) %>%
         group_by(date, cluster_pimsa) %>%
         summarise(n_desoc = sum(abs_desoc)) %>%
@@ -148,7 +154,9 @@ desoc %>%
         pivot_longer(cols = c(n_desoc, p_desoc)) %>%
         pivot_wider(names_from = c(date, name),
                     values_from=value) %>%
-        select(cluster_pimsa, contains("n"), contains("p"))
+        select(cluster_pimsa, contains("n"), contains("p")) %>%
+         writexl::write_xlsx('./data/tabs/sprflotante_20102019_desoc_clstpimsa.xlsx')
+ 
 
 
 #https://rfortherestofus.com/2024/02/sparklines-gt
