@@ -376,7 +376,232 @@ ainformalxingreso0919 <- informal %>%
 # Los países de ingresos altos tiene proporción mínima con una población asalariada mucho mayor
 
 
+##################################################
+# Comparar si coincide el total de asalariados en 
+# en datos de temporarios y trabajo parcial en datos orginarios
+#################################################
+
+# Unir las bases por ref_area y time
+compasal1 <- tparcial %>%
+        select(ref_area, time, asal_n) %>%
+        rename(asal_n_tparcial = asal_n) %>%
+        full_join(
+                temporario %>% 
+                        select(ref_area, time, asal_n) %>%
+                        rename(asal_n_temporario = asal_n),
+                by = c("ref_area", "time")
+        )
+
+# Filtrar para el rango de años entre 2009 y 2019
+compasal1 <- compasal1 %>%
+        filter(time >= 2009 & time <= 2019)
+
+# Crear columnas para verificar coincidencias y margen de diferencia
+compasal1 <- compasal1 %>%
+        mutate(
+                coincide = ifelse(is.na(asal_n_tparcial) | is.na(asal_n_temporario), 
+                                  NA, 
+                                  asal_n_tparcial == asal_n_temporario),
+                diferencia = asal_n_tparcial - asal_n_temporario,
+                dentro_margen = ifelse(
+                        is.na(diferencia) | coincide, 
+                        FALSE, 
+                        abs(diferencia) / asal_n_tparcial <= 0.01  # Margen de ±1%
+                ),
+                fuera_margen = ifelse(
+                        !is.na(diferencia) & !coincide & abs(diferencia) / asal_n_tparcial > 0.01, 
+                        TRUE, 
+                        FALSE
+                )
+        )
+
+# Resumen de coincidencias, diferencias y márgenes
+resumenasal1 <- compasal1 %>%
+        summarize(
+                total_casos = n(),
+                coincidencias_exactas = sum(coincide, na.rm = TRUE),
+                diferencias_total = sum(!coincide & !is.na(diferencia), na.rm = TRUE),
+                dentro_margen = sum(dentro_margen, na.rm = TRUE),
+                fuera_margen = sum(fuera_margen, na.rm = TRUE),
+                sin_datos = sum(is.na(coincide))
+        )
+        
+
+# Mostrar el resultado
+list(compasal1 = compasal1, resumenasal1 = resumenasal1)
+
+# Filtrar los casos fuera del margen y mostrar la diferencia
+casos_fuera_margen1 <- compasal1 %>%
+        filter(fuera_margen == TRUE) %>%
+        select(ref_area, time, asal_n_tparcial, asal_n_temporario, diferencia) %>%
+        mutate(
+                margen_diferencia = round(abs(diferencia) / asal_n_tparcial * 100, 2)  # Calcular el margen de diferencia
+        )
+
+# Ver el listado de los casos fuera del margen
+casos_fuera_margen1
+
+# Calcular la frecuencia del margen de diferencia según ref_area y time
+frecuencia_margen_ref_area1 <- casos_fuera_margen1 %>%
+        group_by(ref_area) %>%
+        summarize(frecuencia_ref_area = n(), .groups = 'drop')
+
+frecuencia_margen_time1 <- casos_fuera_margen1 %>%
+        group_by(time) %>%
+        summarize(frecuencia_time = n(), .groups = 'drop')
+
+# Mostrar los resultados
+frecuencia_margen_ref_area1
+frecuencia_margen_time1
+
+
+
+# casos
+# total          1071
+# sin datos       291
+# coinciden       211
+# no coinciden    569, de los cuales
+# dentro del margen +-1%        549
+# fuera del margen               20, de los cuales
+# diferencia >5%                  4
+# AUS GTM DOM PSE concentran     17
+# 2009, 2014, 2010 y 2013        14
+
+
+##################################################
+# Comparar si coincide el total de asalariados en 
+# en datos de temporarios e informal en datos originarios
+#################################################
+
+compasal2 <- informal %>%
+        filter(classif1 == "Asalariados") %>%
+        select(ref_area, time, ocup_n) %>%
+        rename(asal_n_informal = ocup_n) %>%
+        full_join(
+                temporario %>% 
+                        select(ref_area, time, asal_n) %>%
+                        rename(asal_n_temporario = asal_n),
+                by = c("ref_area", "time")
+        )
+
+# Filtrar para el rango de años entre 2009 y 2019
+compasal2 <- compasal2 %>%
+        filter(time >= 2009 & time <= 2019)
+
+# Crear columnas para verificar coincidencias y margen de diferencia
+compasal2 <- compasal2 %>%
+        mutate(
+                coincide = ifelse(is.na(asal_n_informal) | is.na(asal_n_temporario), 
+                                  NA, 
+                                  asal_n_informal == asal_n_temporario),
+                diferencia = asal_n_informal - asal_n_temporario,
+                dentro_margen = ifelse(
+                        is.na(diferencia) | coincide, 
+                        FALSE, 
+                        abs(diferencia) / asal_n_informal <= 0.01  # Margen de ±1%
+                ),
+                fuera_margen = ifelse(
+                        !is.na(diferencia) & !coincide & abs(diferencia) / asal_n_informal > 0.01, 
+                        TRUE, 
+                        FALSE
+                )
+        )
+
+# Resumen de coincidencias, diferencias y márgenes
+resumenasal2 <- compasal2 %>%
+        summarize(
+                total_casos = n(),
+                coincidencias_exactas = sum(coincide, na.rm = TRUE),
+                diferencias_total = sum(!coincide & !is.na(diferencia), na.rm = TRUE),
+                dentro_margen = sum(dentro_margen, na.rm = TRUE),
+                fuera_margen = sum(fuera_margen, na.rm = TRUE),
+                sin_datos = sum(is.na(coincide))
+        )
+
+
+# Mostrar el resultado
+list(compasal2 = compasal2, resumenasal2 = resumenasal2)
+
+# Filtrar los casos fuera del margen y mostrar la diferencia
+casos_fuera_margen2 <- compasal2 %>%
+        filter(fuera_margen == TRUE) %>%
+        select(ref_area, time, asal_n_informal, asal_n_temporario, diferencia) %>%
+        mutate(
+                margen_diferencia = round(abs(diferencia) / asal_n_informal * 100, 2)  # Calcular el margen de diferencia
+        )
+
+# Ver el listado de los casos fuera del margen
+casos_fuera_margen2
+
+# Calcular la frecuencia del margen de diferencia según ref_area y time
+frecuencia_margen_ref_area2 <- casos_fuera_margen2 %>%
+        group_by(ref_area) %>%
+        summarize(frecuencia_ref_area = n(), .groups = 'drop')
+
+frecuencia_margen_time2 <- casos_fuera_margen2 %>%
+        group_by(time) %>%
+        summarize(frecuencia_time = n(), .groups = 'drop')
+
+# Mostrar los resultados
+frecuencia_margen_ref_area2
+frecuencia_margen_time2
+
+
+
+326
+351
+338
+13
+
+# casos
+# total           914
+# sin datos       237
+# coinciden       326
+# no coinciden    351, de los cuales
+# dentro del margen +-1%        338
+# fuera del margen               13, de los cuales
+# diferencia >5%                  3
+# AUS  concentran                11
+# 2011, 2014                     4
+
+######################################################
+# UNIFICAR BASES 
+#####################################################
+
+# Filtrar y renombrar en la base informal
+informal_asal <- informal %>%
+        filter(classif1 == "Asalariados") %>% # Filtrar asalariados
+        select(-classif1) %>%      # Eliminar classif1 y classif2
+        rename(asal_n_inf = ocup_n)           # Renombrar asal_n con sufijo _inf
+
+# Renombrar asal_n en las otras bases
+temporario_asal <- temporario %>%
+        select(-classif2) %>%      # Eliminar classif1 y classif2 si existen
+        rename(asal_n_temp = asal_n)
+
+tparcial_asal <- tparcial %>%
+        rename(asal_n_tp = asal_n)
+
+# Unir las bases
+asal <- informal_asal %>%
+        full_join(temporario_asal, by = c("ref_area", "time", "country", "region", 
+                                                "income_group", "cluster_pimsa", "peq_estado", "excl_tamaño")) %>%
+        full_join(tparcial_asal, by = c("ref_area", "time", "country", "region", 
+                                              "income_group", "cluster_pimsa", "peq_estado", "excl_tamaño")) %>%
+        # Reordenar columnas para que country a excl_tamaño estén al final
+        select(-country, -region, -income_group, -cluster_pimsa, -peq_estado, -excl_tamaño, 
+               country, region, income_group, cluster_pimsa, peq_estado, excl_tamaño)
+
+# Verificar la base final
+asal
+
+na_cases <- asal %>%
+        filter(is.na(region) | is.na(income_group) | is.na(cluster_pimsa) | 
+                       is.na(peq_estado) | is.na(excl_tamaño))
+
+# Ver los casos con NA en las variables especificadas
+na_cases
 ###Pendiente, 
-# Comparar asalariados total entre indicadores
 # Calcular sobre % de asalariados en ocupados
+# Eliminar datos incorrectos. Chequear series antes
 # Explorar algún indicador de cuentapropismo
