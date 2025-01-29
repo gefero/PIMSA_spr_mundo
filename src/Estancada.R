@@ -16,7 +16,10 @@ library(dplyr)
 # Employees by sex and weekly hours actually worked (thousands) -- Annual
 
 employeeshours <- get_ilostat(id = 'EES_TEES_SEX_HOW_NB_A', segment = 'indicator') 
-country_classif <- read_csv('C:/Users/Ricardo/Documents/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/country_classification.csv')
+
+
+country_classif <- read_csv('C:/Users/Ricardo/Documents/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/PIMSA_spr_mundo/data/ouputs/country_classification.csv')
+
 
 # Construcción porcentajes porque aparece en absolutos de asalariados por bandas horarias
 
@@ -585,15 +588,130 @@ tparcial_asal <- tparcial %>%
 # Unir las bases
 asal <- informal_asal %>%
         full_join(temporario_asal, by = c("ref_area", "time", "country", "region", 
-                                                "income_group", "cluster_pimsa", "peq_estado", "excl_tamaño")) %>%
+                                                "income_group", "income_group_2", "cluster_pimsa", "peq_estado", "excl_tamaño", "ocde")) %>%
         full_join(tparcial_asal, by = c("ref_area", "time", "country", "region", 
-                                              "income_group", "cluster_pimsa", "peq_estado", "excl_tamaño")) %>%
+                                                 "income_group", "income_group_2", "cluster_pimsa", "peq_estado", "excl_tamaño", "ocde")) %>%
         # Reordenar columnas para que country a excl_tamaño estén al final
-        select(-country, -region, -income_group, -cluster_pimsa, -peq_estado, -excl_tamaño, 
-               country, region, income_group, cluster_pimsa, peq_estado, excl_tamaño)
+        select(-country, -region, -income_group, -income_group_2, -cluster_pimsa, -peq_estado, -excl_tamaño, -ocde,
+               country, region, income_group, income_group_2, cluster_pimsa, peq_estado, excl_tamaño, ocde)
 
-# Verificar la base final
-asal
+
+# Chequear que datos de asalariados coincidan
+
+
+asal <- asal %>%
+        mutate(
+                # Calcular la diferencia porcentual respecto a asal_n_inf, manejando NAs
+                dif_temp = if_else(!is.na(asal_n_inf) & !is.na(asal_n_temp), 
+                                   (asal_n_temp - asal_n_inf) / asal_n_inf * 100, NA_real_),
+                dif_tp   = if_else(!is.na(asal_n_inf) & !is.na(asal_n_tp),   
+                                   (asal_n_tp - asal_n_inf) / asal_n_inf * 100, NA_real_),
+                
+                # Clasificar los casos según los criterios indicados
+                categoria = case_when(
+                        is.na(asal_n_inf) & is.na(asal_n_temp) & is.na(asal_n_tp) ~ "sin datos",
+                        
+                        # Si solo dos tienen datos, comparar entre ellas
+                        is.na(asal_n_inf) ~ if_else(abs(asal_n_temp - asal_n_tp) / asal_n_temp * 100 <= 1, 
+                                                    "b) Dentro del margen", "c) Fuera del margen"),
+                        is.na(asal_n_temp) ~ if_else(abs(asal_n_inf - asal_n_tp) / asal_n_inf * 100 <= 1, 
+                                                     "b) Dentro del margen", "c) Fuera del margen"),
+                        is.na(asal_n_tp) ~ if_else(abs(asal_n_inf - asal_n_temp) / asal_n_inf * 100 <= 1, 
+                                                   "b) Dentro del margen", "c) Fuera del margen"),
+                        
+                        # Si las tres tienen datos
+                        asal_n_inf == asal_n_temp & asal_n_inf == asal_n_tp ~ "a) Coinciden",
+                        abs(dif_temp) <= 1 & abs(dif_tp) <= 1 ~ "b) Dentro del margen",
+                        TRUE ~ "c) Fuera del margen"
+                )
+        ) %>%
+        # Convertir cualquier NA en "sin datos"
+        mutate(categoria = replace_na(categoria, "sin datos"))
+
+asal %>%
+        count(categoria)
+
+# a) Coinciden           191
+# b) Dentro del margen  1627
+# c) Fuera del margen     53
+# sin datos              471
+
+asal %>%
+        filter(categoria == "c) Fuera del margen") %>%
+        count(country)
+# De los 51
+# Australia 20
+# Bolivia 8 
+# Guatemala 5
+# Panama 4
+# El resto se distribuye entre 9 países.
+
+asal %>%
+        filter(categoria == "c) Fuera del margen") %>%
+        count(time)
+# No se concentran en un año
+
+asal %>%
+        filter(categoria == "c) Fuera del margen") %>%
+        count(excl_tamaño)
+# Todos incluibles
+
+asal %>%
+        filter(categoria == "c) Fuera del margen") %>%
+        count(peq_estado)
+# Ninguno pequeño estado
+
+
+# Unir con datos de cantidad de ocupados.
+asal <- asal %>%
+        left_join(informal %>%
+                          filter(classif1 == "Total") %>%
+                          select(ref_area, time, ocup_n), 
+                  by = c("ref_area", "time"))
+
+# Ordenar la base
+asal <- asal %>%
+        select(time, ref_area, ocup_n, asal_n_inf, informal_n, informal_p, temporario_n, temporario_p, tparcial_n, tparcial_p, everything())
+# Excluyo los 53 casos fuera de margen
+asal <- asal %>%
+        filter(categoria != "c) Fuera del margen")
+# Tomo solo la variable de número de asalariados que aparecía en la base de informalidad
+# porque había sido tomada de cat_ocup y porque ya fueron excluidos los valores que no coincidían procedentes de las otras bases
+asal <- asal %>%
+        rename(asal_n = asal_n_inf)
+# Elimino variables superfluas
+asal <- asal %>%
+        select(-dif_temp, -dif_tp, -categoria, -asal_n_temp, -asal_n_tp)
+# Renombrar variables para posterior recálculo sobre ocupados
+asal <- asal %>%
+        rename(
+                informal_n_asal = informal_n,
+                informal_p_asal = informal_p,
+                temporario_n_asal = temporario_n,
+                temporario_p_asal = temporario_p,
+                tparcial_n_asal = tparcial_n,
+                tparcial_p_asal = tparcial_p       )
+# Generar recálculo sobre total de ocupados
+asal <- asal %>%
+        mutate(
+                informal_p_ocup = informal_n_asal * 100 / ocup_n,
+                temporario_p_ocup = temporario_n_asal * 100 / ocup_n,
+               tparcial_p_ocup = tparcial_n_asal * 100 / ocup_n
+        )
+# Generar proporción de asalariados sobre total
+asal <- asal %>%
+        mutate(
+                asal_p = asal_n *100 / ocup_n)
+# Ordenar base
+asal <- asal %>%
+        select(time, ref_area, ocup_n, asal_n, asal_p, 
+               informal_n_asal, informal_p_asal, informal_p_ocup, 
+               temporario_n_asal, temporario_p_asal, temporario_p_ocup, 
+               tparcial_n_asal, tparcial_p_asal, tparcial_p_ocup, everything())
+
+
+###Pendiente, 
+pasar a xls
 
 na_cases <- asal %>%
         filter(is.na(region) | is.na(income_group) | is.na(cluster_pimsa) | 
@@ -601,7 +719,4 @@ na_cases <- asal %>%
 
 # Ver los casos con NA en las variables especificadas
 na_cases
-###Pendiente, 
-# Calcular sobre % de asalariados en ocupados
-# Eliminar datos incorrectos. Chequear series antes
 # Explorar algún indicador de cuentapropismo
