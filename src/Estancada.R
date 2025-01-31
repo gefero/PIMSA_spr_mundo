@@ -9,6 +9,17 @@ library(ggplot2)
 library(scales)
 library(dplyr)
 
+#OJO HAY QUE REHACER ASAL DE NUEVO PORQUE TOMÓ OCUPADOS TOTAL SOLO PARA INFORMAL Y NO PARA EL RESTO!!!!
+#OJO HAY QUE REHACER ASAL DE NUEVO PORQUE TOMÓ OCUPADOS TOTAL SOLO PARA INFORMAL Y NO PARA EL RESTO!!!!
+#OJO HAY QUE REHACER ASAL DE NUEVO PORQUE TOMÓ OCUPADOS TOTAL SOLO PARA INFORMAL Y NO PARA EL RESTO!!!!
+#OJO HAY QUE REHACER ASAL DE NUEVO PORQUE TOMÓ OCUPADOS TOTAL SOLO PARA INFORMAL Y NO PARA EL RESTO!!!!
+
+#Creación de base  con datos de 
+#- trabajo temporario
+#- trabajo tiempo parcial
+#- trabajo informal
+# sobre el universo de asalariados para evaluar indicadores
+
 ###############################################################
 #### ASALARIADOS A TIEMPO PARCIAL
 ##############################################################
@@ -710,13 +721,3 @@ asal <- asal %>%
                tparcial_n_asal, tparcial_p_asal, tparcial_p_ocup, everything())
 
 
-###Pendiente, 
-pasar a xls
-
-na_cases <- asal %>%
-        filter(is.na(region) | is.na(income_group) | is.na(cluster_pimsa) | 
-                       is.na(peq_estado) | is.na(excl_tamaño))
-
-# Ver los casos con NA en las variables especificadas
-na_cases
-# Explorar algún indicador de cuentapropismo
