@@ -10,10 +10,7 @@ library(ggplot2)
 library(scales)
 library(dplyr)
 
-#OJO HAY QUE REHACER ASAL DE NUEVO PORQUE TOMÓ OCUPADOS TOTAL SOLO PARA INFORMAL Y NO PARA EL RESTO!!!!
-#OJO HAY QUE REHACER ASAL DE NUEVO PORQUE TOMÓ OCUPADOS TOTAL SOLO PARA INFORMAL Y NO PARA EL RESTO!!!!
-#OJO HAY QUE REHACER ASAL DE NUEVO PORQUE TOMÓ OCUPADOS TOTAL SOLO PARA INFORMAL Y NO PARA EL RESTO!!!!
-#OJO HAY QUE REHACER ASAL DE NUEVO PORQUE TOMÓ OCUPADOS TOTAL SOLO PARA INFORMAL Y NO PARA EL RESTO!!!!
+
 
 # Cantidad de países con datos
 asal %>%
@@ -62,7 +59,7 @@ asal %>%
   theme_minimal()
 
 
-
+# Desde aquí ya selecciono el periodo 2009 / 2019
 # Promedio simple de indicadores / asalariados
 asal %>%
   filter(!is.na(informal_p_asal) | !is.na(temporario_p_asal) | !is.na(tparcial_p_asal), 
@@ -111,6 +108,26 @@ asal %>%
   labs(x = "Año", y = "Promedio Ponderado", color = "Grupo de ingresos") +
   ggtitle("Indicadores seleccionados. Promedio ponderado sobre asalariados") +
   theme_minimal()
+
+# Cantidad de países con información sobre total ocupados.
+
+asal %>%
+        filter(!is.na(asal_p), income_group_2 != "99_Sin_datos",
+               peq_estado != "Peq. estado",  # Excluir "Peq. estado"
+               excl_tamaño != "Excluible") %>%  # Excluir "Excluible"
+#        pivot_longer(cols = c(informal_p_asal, temporario_p_asal, tparcial_p_asal), 
+#                     names_to = "Fuente", values_to = "Valor") %>%
+#        filter(!is.na(Valor)) %>%
+        mutate(time = as.numeric(as.character(time))) %>%
+        filter(!is.na(time)) %>%  # Eliminar filas con 'time' NA
+        group_by(time, income_group_2) %>%
+        summarise(n = n(), .groups = "drop") %>%
+        ggplot(aes(x = time, y = n, color = income_group_2, group = income_group_2)) +
+        geom_line() +
+               scale_y_continuous(limits = c(0, 45)) +  # Establecer el máximo de Y en 40
+        labs(x = "Año", y = "Cantidad de países con información", color = "Grupo de ingresos") +
+        ggtitle("Cantidad de países con dato de ocupados (sin pequeños estados y escasa población)") +
+        theme_minimal()
 
 
 # Promedio simple asalariados 
@@ -250,7 +267,7 @@ asal %>%
             .groups = "drop") %>%
   ggplot(aes(x = Fuente, y = promedio_ponderado, fill = region, group = region)) +  # Cambiar a 'region' en el gráfico
   geom_bar(stat = "identity", position = "dodge") +  # Barra separada por región
-  scale_y_continuous(limits = c(0, 30)) +  # Ajustar el máximo de Y a 30
+  scale_y_continuous(limits = c(0, 40)) +  # Ajustar el máximo de Y a 30
   labs(x = "Fuente", y = "Promedio Ponderado", fill = "Región") +  # Cambiar 'color' por 'fill' y etiqueta 'Región'
   ggtitle("Indicadores seleccionados. Promedio ponderado sobre ocupados por región. 2009-2019") +
   theme_minimal() +
@@ -310,10 +327,43 @@ asal %>%
   theme_minimal() +
   theme(legend.position = "bottom")  # Opcional: mover la leyenda
 
+# Para conclusiones. Hipótesis
+# 1 Tiempo parcial como formam propia de países de desarrollo capitalista, posiblemente
+# con sistema institucional desarrollado y luego adaptado a la precariedad legal
+# 2 Informalidad asalariada mayor en capitalismo en extensión con peso del campo
+# Por afluencia de campo a ciudad en un sistema institucional no extendido para el asalariado?
+# 3 Menor peso de informalidad asalariada en grupos 4 y 5 tal vez por incidencia de menor peso de asalariado
+# 4 ¿Peso de informalidad en países de extensión reciente, una combinación de ambas situaciones?
+# 5 No leer mecánicamente, no se trata de que todos llegaran a "tiempo parcial" reconocido como parte de
+# desarrollo capitalista, sino que movimiento de repulsión presiona hacia formas no reconocidas desciudadanizadas
+# y erosión de las formas reconocidas institucionalmente
+
 na_cases <- asal %>%
   filter(is.na(region) | is.na(income_group)  | 
            is.na(peq_estado) | is.na(excl_tamaño))
 
 # Ver los casos con NA en las variables especificadas
 na_cases
+
 # Explorar algún indicador de cuentapropismo
+# Ver si se pueden combinar las siguientes
+
+# Ocupación según actividad económica y ocupación (miles) -- Anual
+# Id: EMP_TEMP_ECO_OCU_NB_A
+
+# Ocupación según sexo, situación en la ocupación y actividad económica (miles) -- Anual
+# EMP_TEMP_SEX_STE_ECO_NB_A
+
+# Ocupación según sexo, situación en la ocupación y ocupación (miles) -- Anual
+# Id: EMP_TEMP_SEX_STE_OCU_NB_A
+
+# Ocupación distingue entre tres niveles de competencia
+#1. Directores y gerentes, 2. Profesionales y 3. Técnicos y profesionales de nivel medio	 (Alto 3 y 4)
+#4. Personal de apoyo administrativo, 5. Trabajadores de los servicios y vendedores
+#        6. Agricultores y trabajadores calificados de agropecuaria, forestal y pesquera,
+#        7. Oficiales, operarios y artesanos de artes mecánicas y de otros oficios,
+#        8. Operadores de instalaciones y maquinaria y ensambladores	(Medio 2)
+# 9. Ocupaciones elementales (Bajo 1)
+
+# Con limitaciones se podría distinguir entre nivel bajo respecto del resto y agro/no agro
+# Y TCP no agro

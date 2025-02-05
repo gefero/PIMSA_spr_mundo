@@ -9,10 +9,7 @@ library(ggplot2)
 library(scales)
 library(dplyr)
 
-#OJO HAY QUE REHACER ASAL DE NUEVO PORQUE TOMÓ OCUPADOS TOTAL SOLO PARA INFORMAL Y NO PARA EL RESTO!!!!
-#OJO HAY QUE REHACER ASAL DE NUEVO PORQUE TOMÓ OCUPADOS TOTAL SOLO PARA INFORMAL Y NO PARA EL RESTO!!!!
-#OJO HAY QUE REHACER ASAL DE NUEVO PORQUE TOMÓ OCUPADOS TOTAL SOLO PARA INFORMAL Y NO PARA EL RESTO!!!!
-#OJO HAY QUE REHACER ASAL DE NUEVO PORQUE TOMÓ OCUPADOS TOTAL SOLO PARA INFORMAL Y NO PARA EL RESTO!!!!
+
 
 #Creación de base  con datos de 
 #- trabajo temporario
@@ -562,11 +559,6 @@ frecuencia_margen_time2
 
 
 
-326
-351
-338
-13
-
 # casos
 # total           914
 # sin datos       237
@@ -650,12 +642,15 @@ asal %>%
 asal %>%
         filter(categoria == "c) Fuera del margen") %>%
         count(country)
-# De los 51
+# De los 53
 # Australia 20
 # Bolivia 8 
 # Guatemala 5
 # Panama 4
-# El resto se distribuye entre 9 países.
+# R Dominicana, Ecuador, West Bank-Gaza, 3 c/u
+# Polonia 2
+# Angola Chile, Malta, Peru, Serbia 1 c/u
+
 
 asal %>%
         filter(categoria == "c) Fuera del margen") %>%
@@ -672,30 +667,80 @@ asal %>%
         count(peq_estado)
 # Ninguno pequeño estado
 
+# Unir con dato de asalariados y ocupados
+# Tomo de la siguiente base OIT "Ocupación según sexo y situación en la ocupación (miles) -- Anual"
 
-# Unir con datos de cantidad de ocupados.
+employment <- get_ilostat(id = 'EMP_TEMP_SEX_STE_NB_A', segment = 'indicator') 
+employment <- employment %>%
+filter(sex == "SEX_T", classif1 %in% c("STE_ICSE93_TOTAL", "STE_ICSE93_1", "STE_ICSE93_2", "STE_ICSE93_3", "STE_ICSE93_5", "STE_ICSE93_6", "STE_ICSE93_4")) %>%  
+        mutate(classif1 = recode(classif1,
+                                 "STE_ICSE93_1" = "Asalariados",
+                                 "STE_ICSE93_2" = "Empleadores",
+                                 "STE_ICSE93_3" = "Trabajadores por cuenta propia (TCP)",
+                                 "STE_ICSE93_4" = "En cooperativas",
+                                 "STE_ICSE93_5" = "Trabajo familiar",
+                                 "STE_ICSE93_6" = "No clasificable",
+                                 "STE_ICSE93_TOTAL" = "Total")) 
+ocupyasal <- employment %>% 
+        filter(classif1 %in% c("Total", "Asalariados")) %>%  
+                       pivot_wider(names_from = classif1, values_from = obs_value, 
+                                   names_prefix = "", 
+                                   values_fill = list(obs_value = NA)) %>%
+                       rename(asal = Asalariados, ocup = Total)
+
+# Excluyo los 53 casos fuera de margen y unifico bases
 asal <- asal %>%
-        left_join(informal %>%
-                          filter(classif1 == "Total") %>%
-                          select(ref_area, time, ocup_n), 
-                  by = c("ref_area", "time"))
+        filter(categoria != "c) Fuera del margen") %>% 
+        left_join(ocupyasal %>%
+        select(ref_area, time, ocup, asal), 
+                                 by = c("ref_area", "time"))
+
+
+
+
+# Comparo la cantidad de asalariados con la de la base unificada
+# Para eso unifico en una variable los datos del total de asalariados de la base informalidad, temporario y trabajo parcial
+# Según el orden de prelación siguiente
+asal <- asal %>%
+        mutate(asal_comp = coalesce(asal_n_inf, asal_n_temp, asal_n_tp))
+asal <- asal %>%
+        mutate(
+                dif = if_else(!is.na(asal) & !is.na(asal_comp),
+                              (asal_comp - asal) / asal * 100, NA_real_),
+                
+                resultado = case_when(
+                        is.na(asal) & is.na(asal_comp) ~ "d) sin datos en ambas",
+                        is.na(asal) ~ "e) sin datos en asal_n",
+                        is.na(asal_comp) ~ "e) sin datos en asal_comp",
+                        asal == asal_comp ~ "a) coincidencia",
+                        !is.na(dif) & abs(dif) <= 1 ~ "b) dentro del margen",
+                        TRUE ~ "c) fuera de ese margen"
+                )
+        )
+asal %>% 
+        count(resultado)
+# Resultado: no hay fuera del margen
+# a) coincidencia               1634
+# b) dentro del margen           556
+# c) fuera de ese margen          36
+# e) sin datos en una variable    73 (todas corresponden a asal) es decir, tienen valores en las variables por indicadores
+
 
 # Ordenar la base
 asal <- asal %>%
-        select(time, ref_area, ocup_n, asal_n_inf, informal_n, informal_p, temporario_n, temporario_p, tparcial_n, tparcial_p, everything())
-# Excluyo los 53 casos fuera de margen
-asal <- asal %>%
-        filter(categoria != "c) Fuera del margen")
-# Tomo solo la variable de número de asalariados que aparecía en la base de informalidad
-# porque había sido tomada de cat_ocup y porque ya fueron excluidos los valores que no coincidían procedentes de las otras bases
-asal <- asal %>%
-        rename(asal_n = asal_n_inf)
+        select(time, ref_area, ocup, asal_comp, asal_n_inf, informal_n, informal_p, temporario_n, temporario_p, tparcial_n, tparcial_p, everything())
+
+
+
+
 # Elimino variables superfluas
 asal <- asal %>%
-        select(-dif_temp, -dif_tp, -categoria, -asal_n_temp, -asal_n_tp)
+        select(-dif_temp, -dif_tp, -categoria, -asal, -dif, -resultado, -asal_n_inf, -asal_n_temp, -asal_n_tp)
 # Renombrar variables para posterior recálculo sobre ocupados
 asal <- asal %>%
         rename(
+                ocup_n = ocup,
+                asal_n = asal_comp,
                 informal_n_asal = informal_n,
                 informal_p_asal = informal_p,
                 temporario_n_asal = temporario_n,
@@ -720,4 +765,10 @@ asal <- asal %>%
                temporario_n_asal, temporario_p_asal, temporario_p_ocup, 
                tparcial_n_asal, tparcial_p_asal, tparcial_p_ocup, everything())
 
+###
+# OJO, hay 73 casos con datos de asalariados pero sin dato de ocupación
+na_asal_n <- sum(is.na(asal$asal_n))
+na_ocup_n <- sum(is.na(asal$ocup_n))
 
+cat("Cantidad de NA en asal_n:", na_asal_n, "\n")
+cat("Cantidad de NA en ocup_n:", na_ocup_n, "\n")
