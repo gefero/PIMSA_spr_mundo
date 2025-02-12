@@ -56,10 +56,12 @@ asal %>%
   scale_y_continuous(limits = c(0, 45)) +  # Establecer el máximo de Y en 40
   labs(x = "Año", y = "Cantidad de países con información", color = "Grupo de ingresos") +
   ggtitle("Cantidad de países con datos (sin pequeños estados y escasa población). Indicadores seleccionados") +
-  theme_minimal()
+  theme_minimal() +
+  theme(legend.position = "bottom")
 
 
 # Desde aquí ya selecciono el periodo 2009 / 2019
+
 # Promedio simple de indicadores / asalariados
 asal %>%
   filter(!is.na(informal_p_asal) | !is.na(temporario_p_asal) | !is.na(tparcial_p_asal), 
@@ -69,7 +71,7 @@ asal %>%
   pivot_longer(cols = c(informal_p_asal, temporario_p_asal, tparcial_p_asal), 
                names_to = "Fuente", values_to = "Valor") %>%
   filter(!is.na(Valor)) %>%
-  mutate(time = as.numeric(as.character(time))) %>%
+        mutate(time = as.character(time)) %>%
   filter(!is.na(time), time >= 2009, time <= 2019) %>%  # Filtrar el período entre 2009 y 2019
   group_by(Fuente, time, income_group_2) %>%
   summarise(promedio = mean(Valor, na.rm = TRUE), .groups = "drop") %>%
@@ -82,7 +84,8 @@ asal %>%
   scale_y_continuous(limits = c(0, 100)) +  # Ajustar el máximo de Y a 40
   labs(x = "Año", y = "Promedio", color = "Grupo de ingresos") +
   ggtitle("Indicadores seleccionados. Promedio simple sobre asalariados") +
-  theme_minimal()
+        theme_minimal() +
+        theme(legend.position = "bottom")
 
 # Promedio ponderado de indicadores sobre asalariados
 asal %>%
@@ -93,7 +96,7 @@ asal %>%
   pivot_longer(cols = c(informal_p_asal, temporario_p_asal, tparcial_p_asal), 
                names_to = "Fuente", values_to = "Valor") %>%
   filter(!is.na(Valor)) %>%
-  mutate(time = as.numeric(as.character(time))) %>%
+        mutate(time = as.character(time)) %>%
   filter(!is.na(time), time >= 2009, time <= 2019) %>%  # Filtrar el período entre 2009 y 2019
   group_by(Fuente, time, income_group_2) %>%
   summarise(promedio_ponderado = sum(Valor * asal_n, na.rm = TRUE) / sum(asal_n, na.rm = TRUE), 
@@ -107,7 +110,8 @@ asal %>%
   scale_y_continuous(limits = c(0, 100)) +  # Ajustar el máximo de Y a 100
   labs(x = "Año", y = "Promedio Ponderado", color = "Grupo de ingresos") +
   ggtitle("Indicadores seleccionados. Promedio ponderado sobre asalariados") +
-  theme_minimal()
+        theme_minimal() +
+        theme(legend.position = "bottom")
 
 # Cantidad de países con información sobre total ocupados.
 
@@ -115,9 +119,6 @@ asal %>%
         filter(!is.na(asal_p), income_group_2 != "99_Sin_datos",
                peq_estado != "Peq. estado",  # Excluir "Peq. estado"
                excl_tamaño != "Excluible") %>%  # Excluir "Excluible"
-#        pivot_longer(cols = c(informal_p_asal, temporario_p_asal, tparcial_p_asal), 
-#                     names_to = "Fuente", values_to = "Valor") %>%
-#        filter(!is.na(Valor)) %>%
         mutate(time = as.numeric(as.character(time))) %>%
         filter(!is.na(time)) %>%  # Eliminar filas con 'time' NA
         group_by(time, income_group_2) %>%
@@ -127,7 +128,8 @@ asal %>%
                scale_y_continuous(limits = c(0, 45)) +  # Establecer el máximo de Y en 40
         labs(x = "Año", y = "Cantidad de países con información", color = "Grupo de ingresos") +
         ggtitle("Cantidad de países con dato de ocupados (sin pequeños estados y escasa población)") +
-        theme_minimal()
+        theme_minimal() +
+        theme(legend.position = "bottom")
 
 
 # Promedio simple asalariados 
@@ -136,7 +138,7 @@ asal %>%
   filter(!is.na(asal_p), income_group_2 != "99_Sin_datos",
          peq_estado != "Peq. estado",  # Excluir "Peq. estado"
          excl_tamaño != "Excluible") %>%  # Excluir "Excluible"
-  mutate(time = as.numeric(as.character(time))) %>%
+        mutate(time = as.character(time)) %>%
   filter(!is.na(time), time >= 2009, time <= 2019) %>%  # Filtrar el período entre 2009 y 2019
   group_by(time, income_group_2) %>%
   summarise(promedio = mean(asal_p, na.rm = TRUE), .groups = "drop") %>%
@@ -145,14 +147,15 @@ asal %>%
   scale_y_continuous(limits = c(0, 100)) +  # Ajustar el máximo de Y a 100
   labs(x = "Año", y = "Promedio", color = "Grupo de ingresos") +
   ggtitle("Asalariados. Promedio simple sobre ocupados") +
-  theme_minimal()
+        theme_minimal() +
+        theme(legend.position = "bottom")
 
 # Promedio ponderado asalariados 
 asal %>%
   filter(!is.na(asal_p), income_group_2 != "99_Sin_datos",
          peq_estado != "Peq. estado",  # Excluir "Peq. estado"
          excl_tamaño != "Excluible") %>%  # Excluir "Excluible"
-  mutate(time = as.numeric(as.character(time))) %>%
+        mutate(time = as.character(time)) %>%
   filter(!is.na(time), time >= 2009, time <= 2019) %>%  # Filtrar el período entre 2009 y 2019
   group_by(time, income_group_2) %>%
   summarise(promedio_ponderado = weighted.mean(asal_p, ocup_n, na.rm = TRUE), .groups = "drop") %>%
@@ -161,7 +164,8 @@ asal %>%
   scale_y_continuous(limits = c(0, 100)) +  # Ajustar el máximo de Y a 100
   labs(x = "Año", y = "Promedio ponderado", color = "Grupo de ingresos") +
   ggtitle("Asalariados. Promedio ponderado sobre ocupados") +
-  theme_minimal()
+        theme_minimal() +
+        theme(legend.position = "bottom")
 
 # Promedio simple de indicadores sobre / ocupados
 
@@ -173,7 +177,7 @@ asal %>%
   pivot_longer(cols = c(informal_p_ocup, temporario_p_ocup, tparcial_p_ocup), 
                names_to = "Fuente", values_to = "Valor") %>%
   filter(!is.na(Valor)) %>%
-  mutate(time = as.numeric(as.character(time))) %>%
+        mutate(time = as.character(time)) %>%
   filter(!is.na(time), time >= 2009, time <= 2019) %>%  # Filtrar el período entre 2009 y 2019
   group_by(Fuente, time, income_group_2) %>%
   summarise(promedio = mean(Valor, na.rm = TRUE), .groups = "drop") %>%
@@ -186,7 +190,8 @@ asal %>%
   scale_y_continuous(limits = c(0, 100)) +  # Ajustar el máximo de Y a 40
   labs(x = "Año", y = "Promedio", color = "Grupo de ingresos") +
   ggtitle("Indicadores seleccionados. Promedio simple sobre ocupados") +
-  theme_minimal()
+        theme_minimal() +
+        theme(legend.position = "bottom")
 
 # Promedio ponderado de indicadores sobre ocupados
 asal %>%
@@ -197,7 +202,7 @@ asal %>%
   pivot_longer(cols = c(informal_p_ocup, temporario_p_ocup, tparcial_p_ocup), 
                names_to = "Fuente", values_to = "Valor") %>%
   filter(!is.na(Valor)) %>%
-  mutate(time = as.numeric(as.character(time))) %>%
+        mutate(time = as.character(time)) %>%
   filter(!is.na(time), time >= 2009, time <= 2019) %>%  # Filtrar el período entre 2009 y 2019
   group_by(Fuente, time, income_group_2) %>%
   summarise(promedio_ponderado = sum(Valor * ocup_n, na.rm = TRUE) / sum(ocup_n, na.rm = TRUE), 
@@ -211,7 +216,8 @@ asal %>%
   scale_y_continuous(limits = c(0, 100)) +  # Ajustar el máximo de Y a 100
   labs(x = "Año", y = "Promedio Ponderado", color = "Grupo de ingresos") +
   ggtitle("Indicadores seleccionados. Promedio ponderado sobre ocupados") +
-  theme_minimal()
+        theme_minimal() +
+        theme(legend.position = "bottom")
 
 # Los indicadores ponderados dan como resultado:
 # informal en países medios y bajos (que posiblemente incluye temporarios)
@@ -265,13 +271,14 @@ asal %>%
   group_by(Fuente, region) %>%  # Agrupar por Fuente y región
   summarise(promedio_ponderado = sum(Valor * ocup_n, na.rm = TRUE) / sum(ocup_n, na.rm = TRUE), 
             .groups = "drop") %>%
+        complete(Fuente, region, fill = list(promedio_ponderado = 0)) %>% 
   ggplot(aes(x = Fuente, y = promedio_ponderado, fill = region, group = region)) +  # Cambiar a 'region' en el gráfico
   geom_bar(stat = "identity", position = "dodge") +  # Barra separada por región
   scale_y_continuous(limits = c(0, 40)) +  # Ajustar el máximo de Y a 30
   labs(x = "Fuente", y = "Promedio Ponderado", fill = "Región") +  # Cambiar 'color' por 'fill' y etiqueta 'Región'
   ggtitle("Indicadores seleccionados. Promedio ponderado sobre ocupados por región. 2009-2019") +
-  theme_minimal() +
-  theme(legend.position = "bottom")  # Opcional: mover la leyenda
+        theme_minimal() +
+        theme(legend.position = "bottom")  # Opcional: mover la leyenda
 
 # # Promedio ponderado de indicadores sobre ocupados por pertenencia a la OCDE (total 2009-2019)
 asal %>%
@@ -319,6 +326,7 @@ asal %>%
   group_by(Fuente, cluster_pimsa) %>%  # Agrupar por Fuente y región
   summarise(promedio_ponderado = sum(Valor * ocup_n, na.rm = TRUE) / sum(ocup_n, na.rm = TRUE), 
             .groups = "drop") %>%
+        filter(!is.na(cluster_pimsa)) %>%  # Excluir casos donde cluster_pimsa es NA
   ggplot(aes(x = Fuente, y = promedio_ponderado, fill = cluster_pimsa, group = cluster_pimsa)) +  
   geom_bar(stat = "identity", position = "dodge") +  # Barra separada por región
   scale_y_continuous(limits = c(0, 30)) +  # Ajustar el máximo de Y a 30
