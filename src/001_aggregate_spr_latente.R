@@ -1,4 +1,7 @@
 library(tidyverse)
+# a) porcentaje de pobreza rural ponderada por población rural absoluta; 
+# b) porcentaje de pequeña propiedad agrícola ponderada por empleo agrícola absoluto
+
 df <- read_csv('./data/proc/2024-04-04__WB_ILOSTAT_spr_comext_dataset.csv')
 
 df <- df %>%
@@ -49,6 +52,7 @@ df_latente_agg <- df_latente %>%
                  newname, indicator) %>%
 #        group_by(iso3c, newname, indicator) %>%
         summarise(mean_value = mean(value, na.rm = TRUE),
+                  #wei_mean_value = weighted.mean()
                   max_value = max(value, na.rm = TRUE),
                   min_value = min(value, na.rm = TRUE),
                   max_value_year = date[which.max(value)],
@@ -71,6 +75,14 @@ df_latente_agg_pivot <- df_latente_agg %>%
         pivot_wider(names_from = newname,
                     values_from = mean_value:min_year,
                     names_glue = "{newname}_{.value}")
+
+
+# df_latente_agg_pivot <- df_latente_agg_pivot %>%
+#         mutate(
+#                 Pobrurmano_mean_value = Pobrurmano_mean_value*(PobrurN_mean_value/sum(PobrurN_mean_value)),
+#                 Pobrursanit_mean_value = Pobrursanit_mean_value*(PobrurN_mean_value/sum(PobrurN_mean_value)),
+#                 Pobruragua_mean_value = Pobruragua_mean_value*(PobrurN_mean_value/sum(PobrurN_mean_value))
+#                )
 
 test <- df_latente_agg_pivot %>%
         filter(iso3c=="ARG")
@@ -211,6 +223,19 @@ df_latente_final <- df_latente_final %>%
 
 df_latente_final %>% 
         select(c("EmpagrP_mean_value", "EmpagrnacP_mean_value", "EmpagrnacN_mean_tablajulian"))
+
+## PONDERO VARIABLES RELEVANTES
+df_latente_final <- df_latente_final %>%
+        mutate(
+                Pobruragua_mean_value = Pobruragua_mean_value*PobrurN_mean_value/sum(PobrurN_mean_value),
+                Pobrurmano_mean_value = Pobrurmano_mean_value*PobrurN_mean_value/sum(PobrurN_mean_value),
+                Pobrursanit_mean_value = Pobrursanit_mean_value*PobrurN_mean_value/sum(PobrurN_mean_value)
+        ) %>%
+        mutate(PeqpropagrP_mean_value = PeqpropagrP_mean_value*EmpagrnacN_mean_tablajulian/sum(EmpagrnacN_mean_tablajulian, na.rm = TRUE))
+
+write_csv(df_latente_final, './data/tablas_finales/spr_latente_ind_final.csv')
+haven::write_sav(df_latente_final, './data/tablas_finales/spr_latente_ind_final.sav')
+openxlsx::write.xlsx(df_latente_final, './data/tablas_finales/spr_latente_ind_final.xlsx')
 
 
 write_csv(df_latente_final, './data/proc/tablas_finales/spr_latente_ind_final.csv')
