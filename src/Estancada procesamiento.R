@@ -11,6 +11,7 @@ library(scales)
 library(dplyr)
 library(grid)
 library(gridExtra)
+library(cowplot)
 
 
 # Cantidad de países con datos
@@ -36,13 +37,14 @@ graf1 <- asal %>%
                                         "02 Medios-altos ingresos" = "Medio alto", 
                                         "03 Medios-bajos ingresos" = "Medio bajo",                                         
                                         "04 Bajos ingresos" = "Bajo")) +  # Solo cambia las etiquetas
-  labs(x = "Año", y = "Cantidad de países con información", color = "Grupo de ingresos") +
+  labs(x = "Año", y = "Cantidad de países con información", color = "Grupo de ingresos", 
+       caption = "Fuente: elaboración propia a partir de OIT-ILOSTAT.") +
   ggtitle("Cantidad de países con información. Indicadores seleccionados. 1980-2024") +
   theme_minimal() + 
   theme(strip.text = element_text(size = 12), # Tamaño de los títulos de facetas
   legend.position = "bottom", 
   legend.text = element_text(size = 12), # Leyenda abajo
-        plot.margin = margin(10, 10, 50, 10))  # Aumentar margen inferior (10 unidades para los demás márgenes, 50 para el inferior)
+        plot.margin = margin(10, 10, 10, 10))  # Aumentar margen inferior (10 unidades para los demás márgenes, 50 para el inferior)
 
 
 ggsave("C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/Estancada/graf1.jpg", plot = graf1, width = 8, height = 6, dpi = 300)
@@ -67,13 +69,14 @@ asal %>%
                                             temporario_p_asal = "Temporario", 
                                             tparcial_p_asal = "Parcial"))) +  # Títulos personalizados
   scale_y_continuous(limits = c(0, 45)) +  # Establecer el máximo de Y en 45
-  labs(x = "Año", y = "Cantidad de países con información", color = "Grupo de ingresos") +
+  labs(x = "Año", y = "Cantidad de países con información", color = "Grupo de ingresos",
+       caption = "Fuente: elaboración propia a partir de OIT-ILOSTAT.") +
   ggtitle("Cantidad de países con datos (sin pequeños estados y escasa población). Indicadores seleccionados") +
         theme_minimal() + 
         theme(strip.text = element_text(size = 12), # Tamaño de los títulos de facetas
               legend.position = "bottom", 
               legend.text = element_text(size = 12), # Leyenda abajo
-              plot.margin = margin(10, 10, 50, 10))  # Aumentar margen inferior
+              plot.margin = margin(10, 10, 10, 10))  # Aumentar margen inferior
 
 
 # Desde aquí ya selecciono el periodo 2009 / 2019
@@ -102,14 +105,15 @@ graf2 <- asal %>%
                                         "02 Medios-altos ingresos" = "Medio alto", 
                                         "03 Medios-bajos ingresos" = "Medio bajo",                                         
                                         "04 Bajos ingresos" = "Bajo")) +  # Solo cambia las etiquetas
-          labs(x = "Año", y = "Promedio", color = "Grupo de ingresos") +
+          labs(x = "Año", y = "Promedio", color = "Grupo de ingresos",
+          caption = "Fuente: elaboración propia a partir de OIT-ILOSTAT.") +
   ggtitle("Indicadores seleccionados. Promedio simple sobre asalariados. 2009-2019") +
         theme_minimal() + 
         theme(strip.text = element_text(size = 12), # Tamaño de los títulos de facetas
               legend.position = "bottom", 
                 axis.text.x = element_text(angle = 90, hjust = 1),  # Rotar las etiquetas del eje X 
                 legend.text = element_text(size = 12), # Leyenda abajo
-              plot.margin = margin(10, 10, 50, 10))  # Aumentar margen inferior
+              plot.margin = margin(10, 10, 10, 10))  # Aumentar margen inferior
 
 
 ggsave("C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/Estancada/graf2.jpg", plot = graf2, width = 8, height = 6, dpi = 300)
@@ -140,14 +144,15 @@ graf3 <-asal %>%
                                         "02 Medios-altos ingresos" = "Medio alto", 
                                         "03 Medios-bajos ingresos" = "Medio bajo",                                         
                                         "04 Bajos ingresos" = "Bajo")) +  # Solo cambia las etiquetas
-  labs(x = "Año", y = "Promedio Ponderado", color = "Grupo de ingresos") +
+  labs(x = "Año", y = "Promedio Ponderado", color = "Grupo de ingresos",
+        caption = "Fuente: elaboración propia a partir de OIT-ILOSTAT.") +
   ggtitle("Indicadores seleccionados. Promedio ponderado sobre asalariados. 2009-2019") +
         theme_minimal() + 
         theme(strip.text = element_text(size = 12), # Tamaño de los títulos de facetas
               legend.position = "bottom", 
               axis.text.x = element_text(angle = 90, hjust = 1),  # Rotar las etiquetas del eje X 
               legend.text = element_text(size = 12), # Leyenda abajo
-              plot.margin = margin(10, 10, 50, 10))  # Aumentar margen inferior
+              plot.margin = margin(10, 10, 10, 10))  # Aumentar margen inferior
 
 ggsave("C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/Estancada/graf3.jpg", plot = graf3, width = 8, height = 6, dpi = 300)
 
@@ -188,15 +193,18 @@ graf4a <-asal %>%
                                         "02 Medios-altos ingresos" = "Medio alto", 
                                         "03 Medios-bajos ingresos" = "Medio bajo",                                         
                                         "04 Bajos ingresos" = "Bajo")) +  # Solo cambia las etiquetas
-  labs(x = "Año", y = "Promedio", color = "Grupo de ingresos") +
-  ggtitle("Asalariados. Promedio simple sobre ocupados. 2009-2019") +
+  labs(x = "Año", y = "Promedio", color = "Grupo de ingresos",
+        caption = "Fuente: elaboración propia a partir de OIT-ILOSTAT.") +        
+  ggtitle("Asalariados. \n Promedio simple sobre ocupados. \n 2009-2019") +
         theme_minimal() + 
         theme(legend.position = "bottom",
               axis.text.x = element_text(angle = 90, hjust = 1),  # Rotar las etiquetas del eje X 
               legend.text = element_text(size = 10), # Leyenda abajo
-              plot.margin = margin(10, 10, 50, 10))  # Aumentar margen inferior
+              plot.margin = margin(10, 10, 10, 10)) + # Aumentar margen inferior
+                guides(color = guide_legend(label.position = "left", title.position = "top", ncol = 2))
 
 ggsave("C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/Estancada/graf4a.jpg", plot = graf4a, width = 4, height = 6, dpi = 300)
+
 
 
 # Promedio ponderado asalariados 
@@ -215,13 +223,15 @@ graf4b <-asal %>%
                                         "02 Medios-altos ingresos" = "Medio alto", 
                                         "03 Medios-bajos ingresos" = "Medio bajo",                                         
                                         "04 Bajos ingresos" = "Bajo")) +  # Solo cambia las etiquetas
-  labs(x = "Año", y = "Promedio ponderado", color = "Grupo de ingresos") +
-  ggtitle("Asalariados. Promedio ponderado sobre ocupados. 2009-2019") +
+        labs(x = "Año", y = "Promedio", color = "Grupo de ingresos",
+             caption = "Fuente: elaboración propia a partir de OIT-ILOSTAT.") + 
+  ggtitle("Asalariados. \n Promedio ponderado sobre ocupados. \n 2009-2019") +
         theme_minimal() + 
         theme(legend.position = "bottom",
               axis.text.x = element_text(angle = 90, hjust = 1),  # Rotar las etiquetas del eje X 
               legend.text = element_text(size = 10), # Leyenda abajo
-              plot.margin = margin(10, 10, 50, 10))  # Aumentar margen inferior
+              plot.margin = margin(10, 10, 10, 10)) +  # Aumentar margen inferior
+                guides(color = guide_legend(label.position = "left", title.position = "top", ncol = 2))
 
 ggsave("C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/Estancada/graf4b.jpg", plot = graf4b, width = 4, height = 6, dpi = 300)
 
@@ -229,7 +239,7 @@ ggsave("C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto S
 
 # Promedio simple de indicadores sobre / ocupados
 
-asal %>%
+graf5a <- asal %>%
   filter(!is.na(informal_p_asal) | !is.na(temporario_p_asal) | !is.na(tparcial_p_asal), 
          income_group_2 != "99_Sin_datos",
          peq_estado != "Peq. estado",  # Excluir "Peq. estado"
@@ -248,13 +258,27 @@ asal %>%
                                             temporario_p_ocup = "Temporario", 
                                             tparcial_p_ocup = "Parcial"))) +  # Títulos personalizados
   scale_y_continuous(limits = c(0, 100)) +  # Ajustar el máximo de Y a 40
-  labs(x = "Año", y = "Promedio", color = "Grupo de ingresos") +
-  ggtitle("Indicadores seleccionados. Promedio simple sobre ocupados") +
+  labs(x = "Año", y = "Promedio", color = "Grupo de ingresos",
+        caption = "Fuente: elaboración propia a partir de OIT-ILOSTAT.") + 
+        scale_color_discrete(labels = c("01 Altos ingresos" = "Alto", 
+                                        "02 Medios-altos ingresos" = "Medio alto", 
+                                        "03 Medios-bajos ingresos" = "Medio bajo",                                         
+                                        "04 Bajos ingresos" = "Bajo")) +  # Solo cambia las etiquetas
+  ggtitle("Indicadores seleccionados. Promedio simple sobre ocupados. 2009-2019") +
         theme_minimal() +
-        theme(legend.position = "bottom")
+        theme(strip.text = element_text(size = 12), # Tamaño de los títulos de facetas
+         axis.text.x = element_text(angle = 90, hjust = 1),  # Rotar las etiquetas del eje X 
+        legend.position = "bottom", 
+        legend.text = element_text(size = 12), # Leyenda abajo
+        plot.margin = margin(10, 10, 10, 10))  # Aumentar margen inferior (10 unidades para los demás márgenes, 50 para el inferior)
+
+ggsave("C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/Estancada/graf5a.jpg", plot = graf5a, width = 8, height = 6, dpi = 300)
+
+
+ 
 
 # Promedio ponderado de indicadores sobre ocupados
-asal %>%
+graf5b <- asal %>%
   filter(!is.na(informal_p_asal) | !is.na(temporario_p_asal) | !is.na(tparcial_p_asal), 
          income_group_2 != "99_Sin_datos",
          peq_estado != "Peq. estado",  # Excluir "Peq. estado"
@@ -274,10 +298,22 @@ asal %>%
                                             temporario_p_ocup = "Temporario", 
                                             tparcial_p_ocup = "Parcial"))) +  # Títulos personalizados
   scale_y_continuous(limits = c(0, 100)) +  # Ajustar el máximo de Y a 100
-  labs(x = "Año", y = "Promedio Ponderado", color = "Grupo de ingresos") +
-  ggtitle("Indicadores seleccionados. Promedio ponderado sobre ocupados") +
+        scale_color_discrete(labels = c("01 Altos ingresos" = "Alto", 
+                                        "02 Medios-altos ingresos" = "Medio alto", 
+                                        "03 Medios-bajos ingresos" = "Medio bajo",                                         
+                                        "04 Bajos ingresos" = "Bajo")) +  # Solo cambia las etiquetas
+  labs(x = "Año", y = "Promedio Ponderado", color = "Grupo de ingresos",
+        caption = "Fuente: elaboración propia a partir de OIT-ILOSTAT.") + 
+  ggtitle("Indicadores seleccionados. Promedio ponderado sobre ocupados. 2009-2019") +
         theme_minimal() +
-        theme(legend.position = "bottom")
+        theme(strip.text = element_text(size = 12), # Tamaño de los títulos de facetas
+              axis.text.x = element_text(angle = 90, hjust = 1),  # Rotar las etiquetas del eje X 
+              legend.position = "bottom", 
+              legend.text = element_text(size = 12), # Leyenda abajo
+              plot.margin = margin(10, 10, 10, 10))  # Aumentar margen inferior (10 unidades para los demás márgenes, 50 para el inferior)
+
+
+ggsave("C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/Estancada/graf5b.jpg", plot = graf5b, width = 8, height = 6, dpi = 300)
 
 # Los indicadores ponderados dan como resultado:
 # informal en países medios y bajos (que posiblemente incluye temporarios)
@@ -286,7 +322,7 @@ asal %>%
 
 
 # # Promedio ponderado de indicadores sobre ocupadospor grupo de ingresos (total 2009-2019)
-asal %>%
+graf6 <- asal %>%
   filter(!is.na(informal_p_asal) | !is.na(temporario_p_asal) | !is.na(tparcial_p_asal), 
          income_group_2 != "99_Sin_datos",
          peq_estado != "Peq. estado",  # Excluir "Peq. estado"
@@ -307,13 +343,26 @@ asal %>%
   ggplot(aes(x = Fuente, y = promedio_ponderado, fill = income_group_2, group = income_group_2)) +
   geom_bar(stat = "identity", position = "dodge") +  # Barra separada por grupo de ingresos
   scale_y_continuous(limits = c(0, 30)) +  # Ajustar el máximo de Y a 100
-  labs(x = "Fuente", y = "Promedio Ponderado", color = "Grupo de ingresos") +
-  ggtitle("Indicadores seleccionados. Promedio ponderado sobre ocupados por grupo de ingresos. 2009-2019") +
+        scale_fill_discrete(name = "Grupo de ingresos",  # Cambiar el nombre en la leyenda
+                            labels = c("01 Altos ingresos" = "Alto", 
+                                       "02 Medios-altos ingresos" = "Medio alto", 
+                                       "03 Medios-bajos ingresos" = "Medio bajo",                                         
+                                       "04 Bajos ingresos" = "Bajo")) +
+        scale_x_discrete(labels = c("Informal" = "Asalariado informal", 
+                                    "Temporario" = "Asalariado temporario", 
+                                    "Parcial" = "Asalariado parcial")) +  # Cambiar nombres de las categorías de "Fuente"
+  labs(x = "Fuente", y = "Promedio Ponderado", color = "Grupo de ingresos",
+        caption = "Fuente: elaboración propia a partir de OIT-ILOSTAT.") + 
+  ggtitle("Indicadores seleccionados. \n Promedio ponderado sobre ocupados por grupo de ingresos. 2009-2019") +
   theme_minimal() +
-  theme(legend.position = "bottom")  # Opcional: mover la leyenda
+  theme(legend.position = "bottom",  # Opcional: mover la leyenda
+        axis.title.x = element_blank(),# Eliminar título del eje X
+        axis.text.x = element_text(size = 12))  # Aumentar tamaño de las etiquetas de las categorías de "Fuente"
+
+ggsave("C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/Estancada/graf6.jpg", plot = graf6, width = 8, height = 6, dpi = 300)
 
 # # Promedio ponderado de indicadores sobre ocupados por región (total 2009-2019)
-asal %>%
+graf7 <- asal %>%
   filter(!is.na(informal_p_asal) | !is.na(temporario_p_asal) | !is.na(tparcial_p_asal), 
          income_group_2 != "99_Sin_datos",
          peq_estado != "Peq. estado",  # Excluir "Peq. estado"
@@ -335,10 +384,26 @@ asal %>%
   ggplot(aes(x = Fuente, y = promedio_ponderado, fill = region, group = region)) +  # Cambiar a 'region' en el gráfico
   geom_bar(stat = "identity", position = "dodge") +  # Barra separada por región
   scale_y_continuous(limits = c(0, 40)) +  # Ajustar el máximo de Y a 30
-  labs(x = "Fuente", y = "Promedio Ponderado", fill = "Región") +  # Cambiar 'color' por 'fill' y etiqueta 'Región'
-  ggtitle("Indicadores seleccionados. Promedio ponderado sobre ocupados por región. 2009-2019") +
+        scale_fill_discrete(labels = c("East Asia & Pacific" = "Asia Oriental y Pacífico", 
+                                       "Latin America & Caribbean" = "Latinoamérica y Caribe", 
+                                       "North America" = "Norteamérica",                                         
+                                       "Sub-Saharan Africa" = "África Subsahariana",
+                                        "Europe & Central Asia" = "Europa y Asia Central",
+                                        "Middle East & North Africa" = "Medio Oriente y Norte de África",
+                                        "South Asia" = "Sur de Asia")) +
+        scale_x_discrete(labels = c("Informal" = "Asalariado informal", 
+                                    "Temporario" = "Asalariado temporario", 
+                                    "Parcial" = "Asalariado parcial")) +  # Cambiar nombres de las categorías de "Fuente"
+  labs(x = "Fuente", y = "Promedio Ponderado", fill = "Región",  # Cambiar 'color' por 'fill' y etiqueta 'Región'
+        caption = "Fuente: elaboración propia a partir de OIT-ILOSTAT.") + 
+          ggtitle("Indicadores seleccionados. Promedio ponderado sobre ocupados por región. 2009-2019") +
         theme_minimal() +
-        theme(legend.position = "bottom")  # Opcional: mover la leyenda
+        theme(legend.position = "bottom",  # Opcional: mover la leyenda
+        axis.title.x = element_blank(),# Eliminar título del eje X
+        axis.text.x = element_text(size = 12))  # Aumentar tamaño de las etiquetas de las categorías de "Fuente"
+
+ggsave("C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/Estancada/graf7.jpg", plot = graf7, width = 8, height = 6, dpi = 300)
+
 
 # # Promedio ponderado de indicadores sobre ocupados por pertenencia a la OCDE (total 2009-2019)
 asal %>%
@@ -367,8 +432,8 @@ asal %>%
   theme_minimal() +
   theme(legend.position = "bottom")  # Opcional: mover la leyenda
 
-# # Promedio ponderado de indicadores sobre ocupados por grado (total 2009-2019)
-asal %>%
+# # Promedio ponderado de indicadores sobre ocupados por grado de desarrollo (total 2009-2019)
+graf8 <- asal %>%
   filter(!is.na(informal_p_asal) | !is.na(temporario_p_asal) | !is.na(tparcial_p_asal), 
          income_group_2 != "99_Sin_datos",
          peq_estado != "Peq. estado",  # Excluir "Peq. estado"
@@ -390,10 +455,25 @@ asal %>%
   ggplot(aes(x = Fuente, y = promedio_ponderado, fill = cluster_pimsa, group = cluster_pimsa)) +  
   geom_bar(stat = "identity", position = "dodge") +  # Barra separada por región
   scale_y_continuous(limits = c(0, 30)) +  # Ajustar el máximo de Y a 30
-  labs(x = "Fuente", y = "Promedio Ponderado", fill = "Grado") +  # Cambiar 'color' por 'fill' y etiqueta 'Región'
-  ggtitle("Indicadores seleccionados. Promedio ponderado sobre ocupados según grado. 2009-2019") +
+        scale_fill_discrete(name = "Grupos según extensión y profundidad",  # Cambiar el nombre en la leyenda
+                        labels = c("C1. Cap. avanzado" = "Grupo 1", 
+                                       "C2. Cap. extensión reciente c/desarrollo profundidad" = "Grupo 2", 
+                                       "C3. Cap. extensión c/peso campo" = "Grupo 3",                                         
+                                       "C4. Cap. escasa extensión c/peso campo" = "Grupo 4",
+                                       "C5. Pequeña propiedad en el campo" = "Grupo 5")) +
+        scale_x_discrete(labels = c("Informal" = "Asalariado informal", 
+                                    "Temporario" = "Asalariado temporario", 
+                                    "Parcial" = "Asalariado parcial")) +  # Cambiar nombres de las categorías de "Fuente"
+  labs(x = "Fuente", y = "Promedio Ponderado", fill = "Grado", # Cambiar 'color' por 'fill' y etiqueta 'Región'
+        caption = "Fuente: elaboración propia a partir de OIT-ILOSTAT.") + 
+  ggtitle("Indicadores seleccionados. \n Promedio ponderado sobre ocupados \n según extensión y profundidad de relaciones capitalista. \n 2009-2019") +
   theme_minimal() +
-  theme(legend.position = "bottom")  # Opcional: mover la leyenda
+        theme(legend.position = "bottom",  # Opcional: mover la leyenda
+      axis.title.x = element_blank(),# Eliminar título del eje X
+      axis.text.x = element_text(size = 12))  # Aumentar tamaño de las etiquetas de las categorías de "Fuente"
+
+ggsave("C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/Estancada/graf8.jpg", plot = graf8, width = 8, height = 6, dpi = 300)
+
 
 # Para conclusiones. Hipótesis
 # 1 Tiempo parcial como formam propia de países de desarrollo capitalista, posiblemente
