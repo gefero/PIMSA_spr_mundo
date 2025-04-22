@@ -233,6 +233,8 @@ graf4b <-asal %>%
               plot.margin = margin(10, 10, 10, 10)) +  # Aumentar margen inferior
                 guides(color = guide_legend(label.position = "left", title.position = "top", ncol = 2))
 
+
+
 ggsave("C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/Estancada/graf4b.jpg", plot = graf4b, width = 4, height = 6, dpi = 300)
 
 
@@ -471,6 +473,53 @@ graf8 <- asal %>%
         theme(legend.position = "bottom",  # Opcional: mover la leyenda
       axis.title.x = element_blank(),# Eliminar título del eje X
       axis.text.x = element_text(size = 12))  # Aumentar tamaño de las etiquetas de las categorías de "Fuente"
+
+# Mismo dato anterior pero en tabla
+tabla8 <- asal %>%
+        filter(!is.na(informal_p_asal) | !is.na(temporario_p_asal) | !is.na(tparcial_p_asal), 
+               income_group_2 != "99_Sin_datos",
+               peq_estado != "Peq. estado",  # Excluir "Peq. estado"
+               excl_tamaño != "Excluible") %>%  # Excluir "Excluible"
+        pivot_longer(cols = c(informal_p_ocup, temporario_p_ocup, tparcial_p_ocup), 
+                     names_to = "Fuente", values_to = "Valor") %>%
+        filter(!is.na(Valor)) %>%
+        mutate(
+                time = as.numeric(as.character(time)),
+                Fuente = recode(Fuente, 
+                                informal_p_ocup = "Asalariado informal", 
+                                temporario_p_ocup = "Asalariado temporario", 
+                                tparcial_p_ocup = "Asalariado parcial")
+        ) %>%
+        filter(!is.na(time), time >= 2009, time <= 2019) %>%  # Filtrar el período entre 2009 y 2019
+        group_by(Fuente, cluster_pimsa) %>%
+        summarise(promedio_ponderado = sum(Valor * ocup_n, na.rm = TRUE) / sum(ocup_n, na.rm = TRUE), 
+                  .groups = "drop") %>%
+        filter(!is.na(cluster_pimsa)) %>%
+        mutate(
+                cluster_pimsa = recode(cluster_pimsa,
+                                       "C1. Cap. avanzado" = "Grupo 1", 
+                                       "C2. Cap. extensión reciente c/desarrollo profundidad" = "Grupo 2", 
+                                       "C3. Cap. extensión c/peso campo" = "Grupo 3",                                         
+                                       "C4. Cap. escasa extensión c/peso campo" = "Grupo 4",
+                                       "C5. Pequeña propiedad en el campo" = "Grupo 5"
+                )
+        )
+
+tabla8_ancha <- tabla8 %>%
+        pivot_wider(names_from = Fuente, values_from = promedio_ponderado)
+
+# Países que componen cada grupo
+tabla_paises <- asal %>%
+        filter(!is.na(cluster_pimsa),
+               income_group_2 != "99_Sin_datos",
+               peq_estado != "Peq. estado",
+               excl_tamaño != "Excluible") %>%
+        select(country, cluster_pimsa) %>%
+        distinct() %>%
+        arrange(cluster_pimsa, country)
+tabla_paises_listada <- tabla_paises %>%
+        group_by(cluster_pimsa) %>%
+        summarise(Países = paste(sort(country), collapse = ", "), .groups = "drop")
 
 ggsave("C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/Estancada/graf8.jpg", plot = graf8, width = 8, height = 6, dpi = 300)
 
