@@ -9,8 +9,11 @@ desoc <- wb_data(c("SL.UEM.TOTL.ZS","SL.TLF.TOTL.IN"),
                  start_date=1991,
                  end_date=2019)
 
+
+
 desoc <- desoc %>%
         filter(!is.na(SL.UEM.TOTL.ZS)) %>%
+        #filter(!is.na())
         #select(-c(unit:last_updated)) %>%
         rename(p_desoc = SL.UEM.TOTL.ZS,
                pea = SL.TLF.TOTL.IN) %>%
@@ -23,6 +26,7 @@ desoc <- desoc %>%
         left_join(country_classif %>% select(-country), by="iso3c") %>%
         select(iso3c:country, region:ocde, everything())
 
+
 ## CALCULAR PUNTO INTERMEDIO LA CANTIDAD TOTAL DE DESOC PARA 2010 y 2019
 ##
 
@@ -30,14 +34,46 @@ desoc_agg <- desoc %>%
         arrange(iso3c, date) %>%
         group_by(iso3c, country, region, income_group, cluster_pimsa,
                  peq_estado, excl_tamaño) %>%
-        summarise(mean_value = weighted.mean(p_desoc,pea),
+        summarise(mean_desoc_w = weighted.mean(p_desoc,pea, na.rm=TRUE),
+                  mean_desoc = mean(p_desoc),
+                  sd = sd(p_desoc),
                   pea = mean(pea),
                   max_value = max(p_desoc),
                   min_value = min(p_desoc),
+                  first_year_value = p_desoc[which.min(date)],
+                  last_year_value = p_desoc[which.max(date)],
                   max_value_year = date[which.max(p_desoc)],
                   min_value_year = date[which.min(p_desoc)],
                   serie = list(p_desoc)) %>%
-        ungroup()
+        ungroup() %>%
+        mutate(evolution = (((last_year_value / first_year_value) - 1)),
+               range = max_value - min_value)
+
+
+desoc_agg %>%
+        ggplot() + 
+                geom_col(aes(x=iso3c, y=evolution, fill=cluster_pimsa)) +
+                theme_minimal() +
+                coord_flip() +
+                facet_wrap(~cluster_pimsa)
+
+desoc_agg %>%
+        group_by(cluster_pimsa) %>%
+        summarise(mean_w = mean(mean_desoc_w, na.rm = TRUE),
+                  mean_sw = mean(mean_desoc),
+                  evol = mean(evolution),
+                  sd = mean(sd),
+                  rango = mean(range, na.rm = TRUE),
+                  mean_year_max = mean(max_value_year),
+                  mean_year_min = mean(min_value_year))
+
+
+
+
+
+
+
+
 
 desoc %>%
 #        mutate(abs_desoc = p_desoc*pea) %>%
@@ -69,6 +105,7 @@ desoc_agg %>%
 ########
 
 desoc_agg %>%
+        arrange(cluster_pimsa, iso3c) %>%
         gt() %>% 
         cols_label(
                 iso3c = "Country code",
