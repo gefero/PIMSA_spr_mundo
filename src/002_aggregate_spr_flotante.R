@@ -26,46 +26,41 @@ desoc <- desoc %>%
         left_join(country_classif %>% select(-country), by="iso3c") %>%
         select(iso3c:country, region:ocde, everything())
 
+desoc_agg <- desoc %>%
+        arrange(iso3c, date) %>%
+        filter(date >= 2009) %>% # Filtra los años 2009-2019 para que sea consistente con el resto de los análisis
+        group_by(iso3c, country, region, income_group, cluster_pimsa,
+                 peq_estado, excl_tamaño) %>%
+        summarise(mean_desoc_w = weighted.mean(p_desoc,pea),
+                  mean_desoc = mean(p_desoc),
+                  sd = sd(p_desoc),
+                  pea = mean(pea),
+                  #max_value = max(p_desoc),
+                  #min_value = min(p_desoc),
+                  #first_year_value = p_desoc[which.min(date)],
+                  #last_year_value = p_desoc[which.max(date)],
+                  #max_value_year = date[which.max(p_desoc)],
+                  #min_value_year = date[which.min(p_desoc)],
+                  #serie = list(p_desoc)
+        ) %>%
+        ungroup() 
+#%>%
+#        mutate(evolution = (((last_year_value / first_year_value) - 1)),
+#               range = max_value - min_value)
+
+################################################################################
 
 ## CALCULAR PUNTO INTERMEDIO LA CANTIDAD TOTAL DE DESOC PARA 2010 y 2019
 ##
 
-desoc_agg <- desoc %>%
-        arrange(iso3c, date) %>%
-        group_by(iso3c, country, region, income_group, cluster_pimsa,
-                 peq_estado, excl_tamaño) %>%
-        summarise(mean_desoc_w = weighted.mean(p_desoc,pea, na.rm=TRUE),
-                  mean_desoc = mean(p_desoc),
-                  sd = sd(p_desoc),
-                  pea = mean(pea),
-                  max_value = max(p_desoc),
-                  min_value = min(p_desoc),
-                  first_year_value = p_desoc[which.min(date)],
-                  last_year_value = p_desoc[which.max(date)],
-                  max_value_year = date[which.max(p_desoc)],
-                  min_value_year = date[which.min(p_desoc)],
-                  serie = list(p_desoc)) %>%
-        ungroup() %>%
-        mutate(evolution = (((last_year_value / first_year_value) - 1)),
-               range = max_value - min_value)
 
 
-desoc_agg %>%
-        ggplot() + 
-                geom_col(aes(x=iso3c, y=evolution, fill=cluster_pimsa)) +
-                theme_minimal() +
-                coord_flip() +
-                facet_wrap(~cluster_pimsa)
-
-desoc_agg %>%
+desoc %>%
+        filter(date >= 2009) %>%
         group_by(cluster_pimsa) %>%
-        summarise(mean_w = mean(mean_desoc_w, na.rm = TRUE),
-                  mean_sw = mean(mean_desoc),
-                  evol = mean(evolution),
-                  sd = mean(sd),
-                  rango = mean(range, na.rm = TRUE),
-                  mean_year_max = mean(max_value_year),
-                  mean_year_min = mean(min_value_year))
+        summarise(mean_w =  weighted.mean(p_desoc,pea),
+                  mean_sw = mean(p_desoc)
+        )
 
 
 
@@ -124,6 +119,7 @@ desoc_agg %>%
 plot <- desoc %>%
         ggplot() +
         geom_line(aes(x=date, y=p_desoc, color=income_group_2, group=country)) +
+        scale_color_viridis_d() +
         theme_minimal() +
         facet_wrap(~cluster_pimsa)
 
