@@ -470,6 +470,67 @@ desoc_tabla4 <- desoc %>%
 write_xlsx(desoc_tabla4,
            path = "C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/Flotante/desoc_tabla4.xlsx")
 
+# Cantidad de países según cluster pimsa y rangos de desocupación, 1999 y 2010
+desoc_tabla5 <- desoc %>%
+        filter(
+                date %in% c(1999, 2010),
+                !is.na(p_desoc), !is.na(pea), !is.na(cluster_pimsa),
+                income_group_2 != "99_Sin_datos",
+                peq_estado != "Peq. estado",
+                excl_tamaño != "Excluible"
+        ) %>%
+        mutate(
+                rango_desoc = case_when(
+                        p_desoc <= 5 ~ "0-5%",
+                        p_desoc <= 10 ~ "5,1-10%",
+                        p_desoc <= 15 ~ "10,1-15%",
+                        p_desoc <= 20 ~ "15,1-20%",
+                        p_desoc > 20 ~ "Más de 20%"
+                ),
+                rango_desoc = factor(rango_desoc, levels = c("0-5%", "5,1-10%", "10,1-15%", "15,1-20%", "Más de 20%"))
+        ) %>%
+        distinct(date, country, cluster_pimsa, rango_desoc) %>%
+        count(date, cluster_pimsa, rango_desoc, name = "n_paises") %>%
+        tidyr::pivot_wider(
+                names_from = rango_desoc,
+                values_from = n_paises,
+                values_fill = 0
+        ) %>%
+        arrange(date, cluster_pimsa)
+write_xlsx(desoc_tabla5,
+           path = "C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/Flotante/desoc_tabla5.xlsx")
+
+# Enumeración de países según cluster pimsa y rangos de desocupación, 1999 y 2010
+desoc_tabla6 <- desoc %>%
+        filter(
+                date %in% c(1999, 2010),
+                !is.na(p_desoc), !is.na(pea), !is.na(cluster_pimsa),
+                income_group_2 != "99_Sin_datos",
+                peq_estado != "Peq. estado",
+                excl_tamaño != "Excluible"
+        ) %>%
+        mutate(
+                rango_desoc = case_when(
+                        p_desoc <= 10 ~ "hasta 10%",
+                        p_desoc <= 20 ~ "10,1-20%",
+                        p_desoc > 20 ~ "Más de 20%"
+                ),
+                rango_desoc = factor(rango_desoc, levels = c("hasta 10%", "10,1-20%", "Más de 20%"))
+        ) %>%
+        distinct(date, country, cluster_pimsa, rango_desoc) %>%
+        group_by(date, cluster_pimsa, rango_desoc) %>%
+        summarise(
+                paises = paste(sort(unique(country)), collapse = ", "),
+                .groups = "drop"
+        ) %>%
+        tidyr::pivot_wider(
+                names_from = rango_desoc,
+                values_from = paises,
+                values_fill = ""
+        ) %>%
+        arrange(date, cluster_pimsa)
+write_xlsx(desoc_tabla6,
+           path = "C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/Flotante/desoc_tabla6.xlsx")
 
 ############
 
