@@ -115,6 +115,7 @@ agr_total_nac_agg_pivot <- agr_total_nac_agg %>%
         pivot_wider(names_from = classif2,
                     values_from = mean_value)
 
+## CÁLCULO DE PESO DE PEQUEÑA PROPIEDAD A NIVEL PAIS
 indeptes_agro <- df_catocup_ %>%
         filter(label_agg %in% c("Peq_prod_Agro_N", "Total") &
                        classif2=="ECO_SECTOR_AGR")
@@ -138,6 +139,7 @@ indeptes_agro_agg_pivot <- indeptes_agro_agg %>%
         pivot_wider(names_from = label_agg,
                     values_from = mean_value)
 
+## UNION DE TABLAS DE TOTAL Y DE PEQUEÑA PROPIEDAD
 df_peqprop_final <- agr_total_nac_agg_pivot %>%
         left_join(indeptes_agro_agg_pivot) %>%
         rename(iso3c = ref_area,
@@ -151,11 +153,11 @@ df_peqprop_final <- df_peqprop_final %>%
         select(iso3c, country:ocde, everything()) 
         
 
+## UNION TABLA SPR LATENTE FINAL
 spr_latente <- df_peqprop_final %>%
         left_join(pobreza_rural_final %>% 
                           select(iso3c, SH.H2O.BASW.RU.ZS:SP.RUR.TOTL.ZS)
                   )
-
 
 ## Testeo media pesada Pequeña prop. agrícola (peso población ocupada total)
 spr_latente %>%
@@ -164,7 +166,8 @@ spr_latente %>%
                 ) %>%
         group_by(cluster_pimsa) %>%
         summarise(peq_prop_prop = weighted.mean(Peq_prod_Agro_N, w=Pob_Ocup_N, , na.rm=TRUE),
-                  n = n())
+                  n = n()
+                  )
 
 
 ## Testeo media pesada indicadores de pobreza rural (peso población total)
