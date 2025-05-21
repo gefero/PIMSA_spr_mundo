@@ -126,9 +126,9 @@ indeptes_agro_agg <- indeptes_agro %>%
         ungroup() %>%
         pivot_wider(names_from=label_agg,
                     values_from = value) %>%
-        mutate(PeqpropagrP = Peq_prod_Agro_N / Total *100) %>%
+        mutate(Peq_prod_Agro_P = Peq_prod_Agro_N / Total *100) %>%
         select(-Total) %>%
-        pivot_longer(Peq_prod_Agro_N:Peq_prod_Agro_N,
+        pivot_longer(Peq_prod_Agro_N:Peq_prod_Agro_P,
                      names_to="label_agg")
 
 indeptes_agro_agg_pivot <- indeptes_agro_agg %>%
@@ -144,7 +144,7 @@ df_peqprop_final <- agr_total_nac_agg_pivot %>%
         left_join(indeptes_agro_agg_pivot) %>%
         rename(iso3c = ref_area,
                Pob_Agric_N = ECO_SECTOR_AGR,
-               Pob_Agric_prop = ECO_SECTOR_AGR_PROP,
+               Pob_Agric_P = ECO_SECTOR_AGR_PROP,
                Pob_Ocup_N = ECO_SECTOR_TOTAL) %>%
         select(iso3c, everything())
 
@@ -159,13 +159,19 @@ spr_latente <- df_peqprop_final %>%
                           select(iso3c, SH.H2O.BASW.RU.ZS:SP.RUR.TOTL.ZS)
                   )
 
+write_csv(spr_latente, './data/tablas_finales/spr_latente_ind_final.csv')
+haven::write_sav(spr_latente, './data/tablas_finales/spr_latente_ind_final.sav')
+openxlsx::write.xlsx(spr_latente, './data/tablas_finales/spr_latente_ind_final.xlsx')
+
 ## Testeo media pesada Pequeña prop. agrícola (peso población ocupada total)
 spr_latente %>%
         filter(
                 peq_estado != "Peq. estado"
                 ) %>%
         group_by(cluster_pimsa) %>%
-        summarise(peq_prop_prop = weighted.mean(Peq_prod_Agro_N, w=Pob_Ocup_N, , na.rm=TRUE),
+        summarise(
+                mean_peq_prop_N = mean(Peq_prod_Agro_P, na.rm=TRUE), #media comun
+                w_mean_peq_prop_N = weighted.mean(Peq_prod_Agro_P, w=Pob_Ocup_N, , na.rm=TRUE), #media pesada
                   n = n()
                   )
 
