@@ -1,101 +1,69 @@
 library(tidyverse)
-# a) porcentaje de pobreza rural ponderada por población rural absoluta; 
-# b) porcentaje de pequeña propiedad agrícola ponderada por empleo agrícola absoluto
-
-df <- read_csv('./data/proc/2024-04-04__WB_ILOSTAT_spr_comext_dataset.csv')
-
-df <- df %>%
-        mutate(across(classif1:classif2, 
-                      ~replace_na(., 'S/Classif')))
-
-df <- df %>%
-        mutate(excl_tamaño = if_else(is.na(excl_tamaño), "No excluible", excl_tamaño),
-               peq_estado = if_else(is.na(peq_estado), "No peq. estado", peq_estado))
-
+library(Rilostat)
+library(wbstats)
 latente <- c(
         "SP.RUR.TOTL.ZS", 
         "SP.RUR.TOTL",
+        "SP.POP.TOTL",
         "SH.H2O.BASW.RU.ZS",
-        "SH.STA.HYGN.RU.ZS", 
         "SH.STA.BASS.RU.ZS",
         "SL.AGR.EMPL.ZS", 
         "EMP_TEMP_SEX_STE_ECO_NB_A"
-        )
+)
+
 
 names <- c(
-        "SP.RUR.TOTL.ZS"= "PobrurP", 
-        "SP.RUR.TOTL"= "PobrurN",
-        "SH.H2O.BASW.RU.ZS" = "Pobruragua",
-        "SH.STA.HYGN.RU.ZS" = "Pobrurmano", 
-        "SH.STA.BASS.RU.ZS" = "Pobrursanit",
-        "SL.AGR.EMPL.ZS" = "EmpagrP"
-        ) %>% 
-        enframe(name="indicator_id", value="newname")
+        "SP.RUR.TOTL.ZS"= "Pob_Rural_Prop", 
+        "SP.RUR.TOTL"= "Pob_Rural_N",
+        "SP.POP.TOTL" = "Pob_Total_N",
+        "SH.H2O.BASW.RU.ZS" = "Pob_Rural_Agua_Prop",
+        "SH.STA.BASS.RU.ZS" = "Pob_Sanit_Agua_Prop",
+        "SL.AGR.EMPL.ZS" = "Ocup_Agro_Prop",
+        "EMP_TEMP_SEX_STE_ECO_NB_A" = "Ocup_Rama_CatOcup_N"
+) %>% 
+        enframe(name="indicator_id", value="newname") %>%
+        mutate(source = case_when(
+                              indicator_id == "EMP_TEMP_SEX_STE_ECO_NB_A" ~ "ILOStat",
+                              TRUE ~ "WBData"
+                      ))
 
 
-df_latente <- df %>%
-        filter(indicator_id %in% latente) %>%
-        filter(indicator_id != "EMP_TEMP_SEX_STE_ECO_NB_A")
+## Uso la librería wbstats para descargar los datos
+latente_wb <- wb_data(names %>% 
+                              filter(source == "WBData") %>% 
+                              select(indicator_id) %>%
+                              pull(), 
+                      start_date = 2009, end_date = 2019, return_wide = FALSE)
 
+pobreza_rural <- latente_wb %>%
+        group_by(iso3c, country, indicator_id) %>%
+        summarise(value_raw = mean(value, na.rm=TRUE)) %>%
+        pivot_wider(names_from=indicator_id, 
+                    values_from = value_raw) %>%
+        drop_na() %>%
+        ungroup() %>% 
+        mutate(SH.H2O.BASW.RU.ZS = 100 - SH.H2O.BASW.RU.ZS,
+               SH.STA.BASS.RU.ZS = 100 - SH.STA.BASS.RU.ZS)
 
-df_latente <- df_latente %>%
-        left_join(names, by="indicator_id") %>%
-        select(newname, indicator:fuente)
+country_classif <- read_csv('./data/ouputs/country_classification.csv') 
 
-#test <- df_latente %>%
-#        filter(iso3c == "ARG" & indicator_id == "SH.STA.HYGN.RU.ZS")
+pobreza_rural_final <- pobreza_rural %>%
+        left_join(country_classif) %>%
+        select(iso3c, country, region:ocde, everything())
 
-df_latente_agg <- df_latente %>%
-        select(-c(sex, classif1, classif2)) %>%
-        group_by(dimension, iso3c, country, 
-                 region, income_group, cluster_pimsa, peq_estado, excl_tamaño,
-                 newname, indicator) %>%
-#        group_by(iso3c, newname, indicator) %>%
-        summarise(mean_value = mean(value, na.rm = TRUE),
-                  #wei_mean_value = weighted.mean()
-                  max_value = max(value, na.rm = TRUE),
-                  min_value = min(value, na.rm = TRUE),
-                  max_value_year = date[which.max(value)],
-                  min_value_year = date[which.min(value)],
-                  n = sum(!is.na(value))
-        ) %>%
-        left_join(
-                df_latente %>%
-                        select(-c(sex, classif1, classif2)) %>%
-                        drop_na(value) %>%
-                        group_by(iso3c,
-                                 newname, indicator) %>%
-                        summarise(max_year = max(date),
-                                  min_year = min(date))
-        ) %>%
-        ungroup()
+### CAT_OCUP_RAMA
+df_catocup <- get_ilostat(id="EMP_TEMP_SEX_STE_ECO_NB_A",
+                       filters=list(
+                               timefrom=2009,
+                               timeto=2019,
+                               sex="SEX_T")
+                       )
 
-df_latente_agg_pivot <- df_latente_agg %>%
-        select(-indicator) %>%
-        pivot_wider(names_from = newname,
-                    values_from = mean_value:min_year,
-                    names_glue = "{newname}_{.value}")
-
-
-# df_latente_agg_pivot <- df_latente_agg_pivot %>%
-#         mutate(
-#                 Pobrurmano_mean_value = Pobrurmano_mean_value*(PobrurN_mean_value/sum(PobrurN_mean_value)),
-#                 Pobrursanit_mean_value = Pobrursanit_mean_value*(PobrurN_mean_value/sum(PobrurN_mean_value)),
-#                 Pobruragua_mean_value = Pobruragua_mean_value*(PobrurN_mean_value/sum(PobrurN_mean_value))
-#                )
-
-test <- df_latente_agg_pivot %>%
-        filter(iso3c=="ARG")
-
-#####
-
-df_cat_ocup <- df %>%
-        filter(indicator_id %in% "EMP_TEMP_SEX_STE_ECO_NB_A") %>%
-        filter(sex=="SEX_T") %>%
+df_catocup_ <- df_catocup %>%
         filter(str_detect(classif1, "STE_ICSE93"))  %>%
         filter(
                 str_detect(classif2, "ECO_SECTOR_TOTAL") |
-                str_detect(classif2, "ECO_SECTOR_AGR")
+                        str_detect(classif2, "ECO_SECTOR_AGR")
         )
 
 
@@ -110,138 +78,108 @@ cat_ocup <- c(
         enframe(name="classif1",
                 value="label") %>%
         mutate(label_agg = case_when(
-                classif1 %in% c("STE_ICSE93_3", "STE_ICSE93_4", "STE_ICSE93_5") ~ "PeqpropagrN",
+                classif1 %in% c("STE_ICSE93_3", "STE_ICSE93_4", "STE_ICSE93_5") ~ "Peq_prod_Agro_N",
                 TRUE ~ label
         ))
 
-df_cat_ocup <- df_cat_ocup %>%
+df_catocup_ <- df_catocup_ %>%
         left_join(cat_ocup, by="classif1") %>% 
-        select(indicator_id:classif1, label, label_agg, classif2:fuente)
+        select(ref_area, indicator:classif1, label, label_agg, classif2:obs_value)
 
-agr_total_nac <- df_cat_ocup %>%
+## CALCULO LOS TOTALES DE POB AGRICOLA A NIVEL PAÍS
+agr_total_nac <- df_catocup_ %>%
         filter(
                 str_detect(classif1, "TOTAL")
         ) %>%
-        select(-fuente, -dimension) %>%
+        select(-label, -label_agg) %>%
         pivot_wider(names_from=classif2,
-                    values_from = value) %>%
-        rename(EmptotalN=ECO_SECTOR_TOTAL,
-               EmpagrnacN=ECO_SECTOR_AGR) %>%
-        mutate(EmpagrnacP = EmpagrnacN/EmptotalN*100)
+                    values_from = obs_value) %>%
+        #rename(EmptotalN=ECO_SECTOR_TOTAL,
+        #       EmpagrnacN=ECO_SECTOR_AGR) %>%
+        mutate(ECO_SECTOR_AGR_PROP = ECO_SECTOR_AGR/ECO_SECTOR_TOTAL*100)
+
 
 agr_total_nac <- agr_total_nac %>%
         #select(-label_agg,-label, -indicator, -indicator_id) %>%
-        pivot_longer(EmptotalN:EmpagrnacP,
+        pivot_longer(ECO_SECTOR_TOTAL:ECO_SECTOR_AGR_PROP,
                      names_to="classif2") %>%
-        select(iso3c, country, 
-               region, income_group, cluster_pimsa, peq_estado, excl_tamaño,
-               classif2, date, value)
+        select(ref_area, time, classif2, value)
 
 agr_total_nac_agg <- agr_total_nac %>%
-        group_by(iso3c, classif2) %>%
-        summarise(mean_value = mean(value, na.rm = TRUE),
-                  max_value = max(value, na.rm = TRUE),
-                  min_value = min(value, na.rm = TRUE),
-                  max_value_year = date[which.max(value)],
-                  min_value_year = date[which.min(value)],
-                  n = sum(!is.na(value)),
-                  max_year = max(date),
-                  min_year = min(date)
+        group_by(ref_area, classif2) %>%
+        summarise(mean_value = mean(value, na.rm = TRUE)
         ) %>%
         ungroup()
 
-
-test <- agr_total_nac %>% filter(iso3c=="AFG")
-
 agr_total_nac_agg_pivot <- agr_total_nac_agg %>%
         pivot_wider(names_from = classif2,
-                    values_from = mean_value:min_year,
-                    names_glue = "{classif2}_{.value}")
+                    values_from = mean_value)
 
-
-### Trab. indepte.
-
-indeptes_agro <- df_cat_ocup %>%
-        filter(label_agg %in% c("PeqpropagrN", "Total") &
+## CÁLCULO DE PESO DE PEQUEÑA PROPIEDAD A NIVEL PAIS
+indeptes_agro <- df_catocup_ %>%
+        filter(label_agg %in% c("Peq_prod_Agro_N", "Total") &
                        classif2=="ECO_SECTOR_AGR")
 
-
 indeptes_agro_agg <- indeptes_agro %>%
-        select(-fuente, -dimension, -classif1,
-               -classif2, -sex) %>%
-        group_by(iso3c, date, label_agg) %>%
-        summarise(value=sum(value)) %>%
+        group_by(ref_area, time, label_agg) %>%
+        summarise(value=sum(obs_value, na.rm=TRUE)) %>%
         ungroup() %>%
         pivot_wider(names_from=label_agg,
                     values_from = value) %>%
-        mutate(PeqpropagrP = PeqpropagrN / Total *100) %>%
+        mutate(PeqpropagrP = Peq_prod_Agro_N / Total *100) %>%
         select(-Total) %>%
-        pivot_longer(PeqpropagrN:PeqpropagrP,
-             names_to="label_agg")
+        pivot_longer(Peq_prod_Agro_N:Peq_prod_Agro_N,
+                     names_to="label_agg")
 
 indeptes_agro_agg_pivot <- indeptes_agro_agg %>%
-        group_by(iso3c, label_agg) %>%
-        summarise(mean_value = mean(value, na.rm = TRUE),
-                  max_value = max(value, na.rm = TRUE),
-                  min_value = min(value, na.rm = TRUE),
-                  max_value_year = date[which.max(value)],
-                  min_value_year = date[which.min(value)],
-                  n = sum(!is.na(value)),
-                  max_year = max(date),
-                  min_year = min(date)
+        group_by(ref_area, label_agg) %>%
+        summarise(mean_value = mean(value, na.rm = TRUE)
         ) %>%
         ungroup() %>%
         pivot_wider(names_from = label_agg,
-                    values_from = mean_value:min_year,
-                    names_glue = "{label_agg}_{.value}")
+                    values_from = mean_value)
 
-test <- indeptes_agro %>% filter(iso3c=="AFG")
+## UNION DE TABLAS DE TOTAL Y DE PEQUEÑA PROPIEDAD
+df_peqprop_final <- agr_total_nac_agg_pivot %>%
+        left_join(indeptes_agro_agg_pivot) %>%
+        rename(iso3c = ref_area,
+               Pob_Agric_N = ECO_SECTOR_AGR,
+               Pob_Agric_prop = ECO_SECTOR_AGR_PROP,
+               Pob_Ocup_N = ECO_SECTOR_TOTAL) %>%
+        select(iso3c, everything())
 
-df_latente_final <- df_latente_agg_pivot %>%
-        left_join(agr_total_nac_agg_pivot) %>%
-        left_join(indeptes_agro_agg_pivot)
+df_peqprop_final <- df_peqprop_final %>%
+        left_join(country_classif) %>%
+        select(iso3c, country:ocde, everything()) 
+        
 
-## Agrego totales absolutos
-abs <- read_csv('./data/raw/Datos centralizados (SPR latente)- Países.csv') %>%
-        janitor::clean_names() %>%
-        select(codigo, empleo_agricola_miles) %>%
-        mutate(empleo_agricola_miles=empleo_agricola_miles) %>%
-        rename(iso3c = codigo,
-               EmpagrnacN_mean_tablajulian = empleo_agricola_miles)
+## UNION TABLA SPR LATENTE FINAL
+spr_latente <- df_peqprop_final %>%
+        left_join(pobreza_rural_final %>% 
+                          select(iso3c, SH.H2O.BASW.RU.ZS:SP.RUR.TOTL.ZS)
+                  )
 
-df_latente_final <- df_latente_final %>%
-        left_join(abs)
-
-names(df_latente_final)
-
-df_latente_final <- df_latente_final %>%
-        select(dimension:excl_tamaño, 
-               contains("mean_value"), contains("min_value"), contains("max_value"),
-               contains("max_value_year"), contains("min_value_year"),
-               contains("max_year"), contains("min_year"),
-               contains("n"))
-
-df_latente_final %>% 
-        select(c("EmpagrP_mean_value", "EmpagrnacP_mean_value", "EmpagrnacN_mean_tablajulian"))
-
-## PONDERO VARIABLES RELEVANTES
-df_latente_final <- df_latente_final %>%
-        mutate(
-                Pobruragua_mean_value = Pobruragua_mean_value*PobrurN_mean_value/sum(PobrurN_mean_value),
-                Pobrurmano_mean_value = Pobrurmano_mean_value*PobrurN_mean_value/sum(PobrurN_mean_value),
-                Pobrursanit_mean_value = Pobrursanit_mean_value*PobrurN_mean_value/sum(PobrurN_mean_value)
-        ) %>%
-        mutate(PeqpropagrP_mean_value = PeqpropagrP_mean_value*EmpagrnacN_mean_tablajulian/sum(EmpagrnacN_mean_tablajulian, na.rm = TRUE))
-
-write_csv(df_latente_final, './data/tablas_finales/spr_latente_ind_final.csv')
-haven::write_sav(df_latente_final, './data/tablas_finales/spr_latente_ind_final.sav')
-openxlsx::write.xlsx(df_latente_final, './data/tablas_finales/spr_latente_ind_final.xlsx')
+## Testeo media pesada Pequeña prop. agrícola (peso población ocupada total)
+spr_latente %>%
+        filter(
+                peq_estado != "Peq. estado"
+                ) %>%
+        group_by(cluster_pimsa) %>%
+        summarise(peq_prop_prop = weighted.mean(Peq_prod_Agro_N, w=Pob_Ocup_N, , na.rm=TRUE),
+                  n = n()
+                  )
 
 
-write_csv(df_latente_final, './data/proc/tablas_finales/spr_latente_ind_final.csv')
-haven::write_sav(df_latente_final, './data/proc/tablas_finales/spr_latente_ind_final.sav')
-openxlsx::write.xlsx(df_latente_final, './data/proc/tablas_finales/spr_latente_ind_final.xlsx')
-#var_dict <- tibble(
-#        var_names = names(df_latente_final),
-#       1 var_labels = NA)
-#var_dict %>% write_csv('./data/proc/tablas_finales/dict_spr_latente_ind_final.csv')
+## Testeo media pesada indicadores de pobreza rural (peso población total)
+spr_latente %>%
+        filter(
+                peq_estado != "Peq. estado"
+                ) %>%
+        group_by(cluster_pimsa) %>%
+        summarise(across(SH.H2O.BASW.RU.ZS:SL.AGR.EMPL.ZS,
+                         list(
+                                 mean = function(x) mean(x, na.rm=TRUE),
+                                 w_mean = function(x) weighted.mean(x, w=SP.POP.TOTL, na.rm=TRUE),
+                                 n = function(x) n()
+                         ))
+        )
