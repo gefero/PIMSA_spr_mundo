@@ -8,6 +8,8 @@ library(writexl)
 library(scales)
 library(Rilostat)
 
+library(plotly)
+
 ## Uso la librería wbstats para descargar los datos
 desoc <- wb_data(c("SL.UEM.TOTL.ZS","SL.TLF.TOTL.IN"),
                  start_date=1991,
@@ -811,6 +813,208 @@ desoc_tabla7 <- desocyrama %>%
         )
 write_xlsx(desoc_tabla7,
            path = "C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/Flotante/desoc_tabla7.xlsx")
+
+# Relación cuadrática entre empleo industrial y desocupación
+
+
+lm(p_desoc ~ porc_IND + I(porc_IND^2), 
+   data = desocyrama %>%
+           filter(date == 1999, 
+                  grupo_dif != "resto", 
+                  !is.na(p_desoc), 
+                  !is.na(porc_IND),
+                  !is.na(cluster_pimsa),
+                  income_group_2 != "99_Sin_datos",
+                  peq_estado != "Peq. estado",
+                  excl_tamaño != "Excluible"
+                  ))
+lm(p_desoc ~ porc_IND + I(porc_IND^2), 
+                  data = desocyrama %>%
+                          filter(date == 2010, 
+                                 grupo_dif != "resto", 
+                                 !is.na(p_desoc), 
+                                 !is.na(porc_IND),
+                                 !is.na(cluster_pimsa),
+                                 income_group_2 != "99_Sin_datos",
+                                 peq_estado != "Peq. estado",
+                                 excl_tamaño != "Excluible"                                 
+                                 ))
+
+desocgraf8 <- desocyrama %>%
+        filter(
+                date %in% c(1999, 2010),
+                grupo_dif != "resto", 
+                !is.na(p_desoc),
+                !is.na(porc_IND),
+                !is.na(cluster_pimsa),
+                income_group_2 != "99_Sin_datos",
+                peq_estado != "Peq. estado",
+                excl_tamaño != "Excluible"
+        ) %>%
+        mutate(cluster_pimsa = case_when(
+                str_detect(cluster_pimsa, "^C1") ~ "Grupo 1",
+                str_detect(cluster_pimsa, "^C2") ~ "Grupo 2",
+                str_detect(cluster_pimsa, "^C3") ~ "Grupo 3",
+                str_detect(cluster_pimsa, "^C4") ~ "Grupo 4",
+                str_detect(cluster_pimsa, "^C5") ~ "Grupo 5",
+                TRUE ~ cluster_pimsa
+        )) %>%
+        ggplot(aes(x = porc_IND, y = p_desoc, color = cluster_pimsa)) +
+        geom_point(aes(size = pea), alpha = 0.6) +
+        geom_smooth(method = "lm", formula = y ~ x + I(x^2),
+                    se = FALSE, color = "red", fullrange = FALSE) +        
+        facet_wrap(~ date) +
+        labs(
+                title = "Relación entre tasa desocupación y empleo industrial (%)\nsegún tipología. 1999 y 2010",
+                x = "Empleo industrial (% del total)",
+                y = "Tasa de desocupación (%)",
+                color = "Tipología",
+                size = "PEA (millones)"
+        ) +
+        scale_size_continuous(
+                labels = label_number(scale = 1e-6, suffix = " M", accuracy = 0.1)
+        ) +
+        scale_color_manual(
+                values = c(
+                        "Grupo 1" = "#ff7f0e",
+                        "Grupo 2" = "#9467bd",
+                        "Grupo 3" = "#2ca02c",
+                        "Grupo 4" = "#1f77b4",
+                        "Grupo 5" = "#d62728"
+                )
+        ) +
+        theme_minimal() +
+        theme(
+                legend.position = "bottom",
+                legend.direction = "horizontal",
+                legend.box = "horizontal",
+                legend.text = element_text(size = 8),
+                legend.title = element_text(size = 9)
+        ) +
+        guides(
+                color = guide_legend(title = "Tipología", title.position = "top", override.aes = list(size = 3)),
+                size = guide_legend(title = "PEA (millones)", title.position = "top", override.aes = list(size = 3))
+        )
+
+ggsave("C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/Flotante/desocgraf8.jpg",
+       plot = desocgraf8, width = 8, height = 6, dpi = 300)
+
+# Relación entre agro/servicios y desocupación
+
+# 1. Definimos rango sin extremos por percentiles 1% y 99%, por cada año
+rangos_sin_extremos <- desocyrama %>%
+        filter(
+                date %in% c(1999, 2010),
+                grupo_dif != "resto", 
+                !is.na(p_desoc),
+                !is.na(razon_AGR_SER),
+                !is.na(cluster_pimsa),
+                income_group_2 != "99_Sin_datos",
+                peq_estado != "Peq. estado",
+                excl_tamaño != "Excluible"
+        ) %>%
+        group_by(date) %>%
+        summarise(
+                min_r = quantile(razon_AGR_SER, 0.01, na.rm = TRUE),
+                max_r = quantile(razon_AGR_SER, 0.99, na.rm = TRUE),
+                .groups = "drop"
+        )
+
+# 2. Creamos predicciones sólo en ese rango “sin extremos”
+predicciones <- rangos_sin_extremos %>%
+        rowwise() %>%
+        mutate(
+                razon_AGR_SER = list(seq(min_r, max_r, length.out = 200))
+        ) %>%
+        unnest(cols = c(razon_AGR_SER)) %>%
+        mutate(
+                p_desoc_pred = predict(modelo4, newdata = data.frame(razon_AGR_SER = razon_AGR_SER))
+        )
+
+# 3. Graficamos todo junto, incluyendo los puntos originales (con casos extremos)
+desocgraf9 <- desocyrama %>%
+        filter(
+                date %in% c(1999, 2010),
+                grupo_dif != "resto", 
+                !is.na(p_desoc),
+                !is.na(razon_AGR_SER),
+                !is.na(cluster_pimsa),
+                income_group_2 != "99_Sin_datos",
+                peq_estado != "Peq. estado",
+                excl_tamaño != "Excluible"
+        ) %>%
+        mutate(cluster_pimsa = case_when(
+                str_detect(cluster_pimsa, "^C1") ~ "Grupo 1",
+                str_detect(cluster_pimsa, "^C2") ~ "Grupo 2",
+                str_detect(cluster_pimsa, "^C3") ~ "Grupo 3",
+                str_detect(cluster_pimsa, "^C4") ~ "Grupo 4",
+                str_detect(cluster_pimsa, "^C5") ~ "Grupo 5",
+                TRUE ~ cluster_pimsa
+        )) %>%
+        ggplot(aes(x = razon_AGR_SER, y = p_desoc, color = cluster_pimsa)) +
+        geom_point(aes(size = pea), alpha = 0.6) +
+        geom_line(data = predicciones, aes(x = razon_AGR_SER, y = p_desoc_pred),
+                  inherit.aes = FALSE, color = "red", size = 1) +
+        facet_wrap(~ date) +
+        labs(
+                title = "Relación entre tasa desocupación y razón empleo agro/servicios\nsegún tipología. 1999 y 2010",
+                x = "Empleo agropecuario / Empleo en servicios",
+                y = "Tasa de desocupación (%)",
+                color = "Tipología",
+                size = "PEA (millones)"
+        ) +
+        scale_size_continuous(
+                labels = label_number(scale = 1e-6, suffix = " M", accuracy = 0.1)
+        ) +
+        scale_color_manual(
+                values = c(
+                        "Grupo 1" = "#ff7f0e",
+                        "Grupo 2" = "#9467bd",
+                        "Grupo 3" = "#2ca02c",
+                        "Grupo 4" = "#1f77b4",
+                        "Grupo 5" = "#d62728"
+                )
+        ) +
+        theme_minimal() +
+        theme(
+                legend.position = "bottom",
+                legend.direction = "horizontal",
+                legend.box = "horizontal",
+                legend.text = element_text(size = 8),
+                legend.title = element_text(size = 9)
+        ) +
+        guides(
+                color = guide_legend(title = "Tipología", title.position = "top", override.aes = list(size = 3)),
+                size = guide_legend(title = "PEA (millones)", title.position = "top", override.aes = list(size = 3))
+        )
+
+# 4. Guardar el gráfico
+ggsave("C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/Flotante/desocgraf9.jpg",
+       plot = desocgraf9, width = 8, height = 6, dpi = 300)
+
+#################
+
+
+
+
+
+########
+
+desocbm %>%
+ #       filter(
+  #              date %in% c(1999, 2010),
+   #             !is.na(p_desoc), !is.na(pea), !is.na(cluster_pimsa),
+    #            income_group_2 != "99_Sin_datos",
+     #           peq_estado != "Peq. estado",
+      #          excl_tamaño != "Excluible"
+#        ) %>%
+        distinct(iso3c) %>%
+        count()
+
+desocbm <- wb_data(c("SL.UEM.TOTL.ZS","SL.TLF.TOTL.IN"),
+                 start_date=1991,
+                 end_date=2023)
+
 
 ################################################################################
 
