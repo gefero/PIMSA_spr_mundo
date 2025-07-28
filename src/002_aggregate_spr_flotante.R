@@ -1091,9 +1091,77 @@ ggsave(
         "C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/Flotante/desocgraf10.jpg",
         plot = desocgraf10, width = 8, height = 6, dpi = 300)
 
+###
+        
 
+# Cuartiles por cluster pimisa. Evolución 1991-2023.
+cuartiles_por_cluster <- desocyrama %>%
+        filter(
+                !is.na(p_desoc),
+                !is.na(cluster_pimsa),
+                income_group_2 != "99_Sin_datos",
+                peq_estado != "Peq. estado",
+                excl_tamaño != "Excluible"
+        ) %>%
+        group_by(cluster_pimsa, date) %>%
+        summarize(
+                q25 = quantile(p_desoc, 0.25, na.rm = TRUE),
+                q50 = quantile(p_desoc, 0.50, na.rm = TRUE),
+                q75 = quantile(p_desoc, 0.75, na.rm = TRUE),
+                .groups = "drop"
+        ) %>%
+        pivot_longer(cols = starts_with("q"), names_to = "cuartil", values_to = "p_desoc")
 
+# Cuartiles globales (para todos los clusters juntos)
+cuartiles_totales <- desocyrama %>%
+        filter(
+                !is.na(p_desoc),
+                !is.na(cluster_pimsa),
+                income_group_2 != "99_Sin_datos",
+                peq_estado != "Peq. estado",
+                excl_tamaño != "Excluible"
+        ) %>%
+        group_by(date) %>%
+        summarize(
+                q25 = quantile(p_desoc, 0.25, na.rm = TRUE),
+                q50 = quantile(p_desoc, 0.50, na.rm = TRUE),
+                q75 = quantile(p_desoc, 0.75, na.rm = TRUE),
+                .groups = "drop"
+        ) %>%
+        pivot_longer(cols = starts_with("q"), names_to = "cuartil", values_to = "p_desoc") %>%
+        mutate(cluster_pimsa = "Total")  # etiqueta para usar en facet_wrap
 
+# Unir ambos
+cuartiles_completo <- bind_rows(cuartiles_por_cluster, cuartiles_totales)
+
+# Gráfico
+
+desocgraf11 <- ggplot(cuartiles_completo, aes(x = date, y = p_desoc, color = cuartil)) +
+        geom_line(size = 0.8) +
+        facet_wrap(
+                ~ cluster_pimsa,
+                labeller = as_labeller(c(
+                        "C1. Cap. avanzado" = "Grupo 1",
+                        "C2. Cap. extensión reciente c/desarrollo profundidad" = "Grupo 2",
+                        "C3. Cap. extensión c/peso campo" = "Grupo 3",
+                        "C4. Cap. escasa extensión c/peso campo" = "Grupo 4",
+                        "C5. Pequeña propiedad en el campo" = "Grupo 5",
+                        "Total" = "Total"
+                ))
+        ) +
+        labs(
+                title = "Evolución de los cuartiles de la tasa de desocupación \npor tipología de desarrollo en extensión y profundidad. 1991-2023",
+                x = "Año", y = "Tasa de desocupación (%)",
+                color = "Cuartil"
+        ) +
+        theme_minimal()+
+        theme(
+                strip.text = element_text(size = 11)  
+        )
+
+ggsave(
+        "C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/Flotante/desocgraf11.jpg",
+        plot = desocgraf11, width = 8, height = 6, dpi = 300)
 ########
 
 desocbm %>%
