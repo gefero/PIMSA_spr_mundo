@@ -772,3 +772,7 @@ na_ocup_n <- sum(is.na(asal$ocup_n))
 
 cat("Cantidad de NA en asal_n:", na_asal_n, "\n")
 cat("Cantidad de NA en ocup_n:", na_ocup_n, "\n")
+
+saveRDS(asal, "C:/Users/Ric/Documents/Ric/PIMSA/Estructura/Equipo Estructura/Proyecto Superpoblación/Equipo con Brasil/Estancada/asal.rds")
+
+glimpse(asal)
