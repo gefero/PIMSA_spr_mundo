@@ -1496,6 +1496,8 @@ ggsave(
 # Desocupación promedio simple y ponderada, contra evolución población ocupada por % asalariado patrón
 # Evolución según clusters.
 
+protect <- get_ilostat("SDG_0131_SEX_SOC_RT_A")
+
 sitocup <- get_ilostat("EMP_2EMP_SEX_STE_NB_A")
 
 sitocup <- sitocup %>% 
